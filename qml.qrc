@@ -1,0 +1,33 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>images/iidre.png</file>
+        <file>images/logoUWB_small.ico</file>
+        <file>DeviceControlSetting.qml</file>
+        <file>FileManager.qml</file>
+        <file>Button_fileManager.qml</file>
+        <file>Mobile.qml</file>
+        <file>Anchor.qml</file>
+        <file>AnchorDetails.qml</file>
+        <file>Title.qml</file>
+        <file>DialogAnchorControl.qml</file>
+        <file>test.qml</file>
+        <file>MapControls.qml</file>
+        <file>images/icon_info_50.png</file>
+        <file>images/icon_distance_50.png</file>
+        <file>MapControlButton.qml</file>
+        <file>images/icon_coord_50.png</file>
+        <file>ZoneMap.qml</file>
+        <file>Map.qml</file>
+        <file>images/icon_zoom_50.png</file>
+        <file>TestRec.qml</file>
+        <file>DeviceUWBSetting.qml</file>
+        <file>UWB_ComboBox.qml</file>
+        <file>WinGraph.qml</file>
+        <file>GraphDist.qml</file>
+        <file>images/icon_graph_50.png</file>
+        <file>WinGraphMobile.qml</file>
+        <file>images/icon_rotation_50.png</file>
+        <file>images/defImgMap.png</file>
+    </qresource>
+</RCC>
