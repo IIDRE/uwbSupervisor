@@ -1,98 +1,45 @@
+/*Copyright Iidre SAS 01 janvier 2019 tech@iidre.com
+
+Ce logiciel est un programme informatique servant à superviser et configurer le réseau UWB du kit Iidre.
+
+Ce logiciel est régi par la licence CeCILL soumise au droit français et
+respectant les principes de diffusion des logiciels libres. Vous pouvez
+utiliser, modifier et/ou redistribuer ce programme sous les conditions
+de la licence CeCILLtelle que diffusée par le CEA, le CNRS et l'INRIA
+sur le site "http://www.cecill.info".
+
+En contrepartie de l'accessibilité au code source et des droits de copie,
+de modification et de redistribution accordés par cette licence, il n'est
+offert aux utilisateurs qu'une garantie limitée.  Pour les mêmes raisons,
+seule une responsabilité restreinte pèse sur l'auteur du programme,  le
+titulaire des droits patrimoniaux et les concédants successifs.
+
+A cet égard  l'attention de l'utilisateur est attirée sur les risques
+associés au chargement,  à l'utilisation,  à la modification et/ou au
+développement et à la reproduction du logiciel par l'utilisateur étant
+donné sa spécificité de logiciel libre, qui peut le rendre complexe à
+manipuler et qui le réserve donc à des développeurs et des professionnels
+avertis possédant  des  connaissances  informatiques approfondies.  Les
+utilisateurs sont donc invités à charger  et  tester  l'adéquation  du
+logiciel à leurs besoins dans des conditions permettant d'assurer la
+sécurité de leurs systèmes et ou de leurs données et, plus généralement,
+à l'utiliser et l'exploiter dans les mêmes conditions de sécurité.
+
+Le fait que vous puissiez accéder à cet en-tête signifie que vous avez
+pris connaissance de la licence CeCILL, et que vous en avez accepté les
+termes.*/
 import QtQuick 2.11
 import QtQuick.Window 2.11
 import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.0
 import QtCharts 2.2
 
-Window {
-    id:root
-    width: 1080
-    height: 720
 
-    property real  _Y: 0
-    property real  _X: 0
-    property real refreshTime_ms: 100
-    property real timeMaxInWindows_ms: 10*1000
-    Timer {
-        property real sessionCount: 0
-        property variant series_array: []
-        interval: root.refreshTime_ms;
-        running: root.visible;
-        onRunningChanged: {
-            if(!root.visible){
-               series.removeAllSeries();
-            }
-
-        }
-
-        repeat: true
-        onTriggered: {
-            root._X++;
-            root._Y++;
-
- //posMobile.append(controler_device.coord.x,controler_device.coord.y)
-            var s = series.createSeries(ChartView.SeriesTypeScatter,"",axeX,axeY)
-
-            s.append(root._X,root._Y)
-            series_array.push(s)
-
-            if(series_array.length > root.timeMaxInWindows_ms/root.refreshTime_ms){
-                s = series_array.shift();
-                axeX.min = s.at(0).x
-                axeY.min = s.at(0).y
-                series.removeSeries(s);
-            }
-
-            var i;
-            var minX,maxX,minY,maxY
-            var stepColor = 1/series_array.length
-            s = series_array[0];
-            minX = maxX = s.at(0).x;
-            minY = maxY = s.at(0).y;
-
-            s.color = Qt.rgba(1,0,0,stepColor);
-            for(i=1;i<series_array.length-1;i++){
-
-                s = series_array[i];
-                 s.color = Qt.rgba(1,0,0,stepColor*i);
-                minY = Math.min(s.at(0).y,minY)
-                maxY = Math.max(s.at(0).y,maxY)
-
-                minX = Math.min(s.at(0).x,minX)
-                maxX = Math.max(s.at(0).x,maxX)
-            }
-            axeX.min=minX
-            axeX.max=maxX
-
-            axeY.min=minY
-            axeY.max=maxY
-        }
-    }
-
-
-
-    ChartView {
-
-        legend.visible:false
-
-        id:series
-        title: "last positions"
-        anchors.fill: parent
-        antialiasing: true
-
-
-
-        ValueAxis{
-            id:axeX
-            onMinChanged: console.log("xmin "+min)
-            titleText: "dist (cm)"
-        }
-
-
-        ValueAxis{
-            id:axeY
-            onMinChanged: console.log("ymin "+min)
-            titleText: "dist (cm)"
-        }
-    }
+Rectangle {
+Rectangle {
+    anchors.centerIn: parent
+    width: 100; height: 100
+    color: "blue"
+    transform: Rotation { origin.x: 25; origin.y: 25; angle: 25}
+}
 }
