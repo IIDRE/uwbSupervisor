@@ -1,10 +1,10 @@
-# uwbSupervisor
+# UwbSupervisor
 
 Logiciel permettant la supervision et la configuration du système de géolocalisation indoor développé par [IIDRE](https://www.iidre.com)
 
 Il facilite le positionnement des ancres, il permet d'importer un fichier dxf contenant les positions des ancres.
 
-# licence 
+# Licence 
 
 Le logiciel uwbSupervisor est publié sous la licence [CeCILL](http://www.cecill.info/licences/Licence_CeCILL_V2-fr.html)
 sauf les codes sources :
@@ -50,7 +50,7 @@ Application développée sous Qt5.11, avec l'EDI [QtCreator](https://www.qt.io/d
 
 
 ## Dépendances
-il n'y a aucune librairie tierce à importer.
+Il n'y a aucune librairie tierce à importer.
 
 ## Procédure de Compilation
 
@@ -58,6 +58,6 @@ Importer le projet avec QtCreator, puis cliquer sur Run.
 
 
 ## Auteur 
-uwbSupervisor est développé par l'équipe de  [IIDRE](https://www.iidre.com)
+UwbSupervisor est développé par l'équipe de  [IIDRE](https://www.iidre.com)
 
 
