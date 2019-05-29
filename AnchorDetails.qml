@@ -44,7 +44,7 @@ GridLayout{
     property var listRadio: []
     property var  limitRadio: {'min':0,'max':0,'avg':0}
     property var  limitDist: {'min':0,'max':0,'avg':0}
-
+    property int cpt: 0
     function addToList(list , value){
         var i={'data':value,'time':new Date().getTime()/1000}
         list.push(i)
@@ -86,6 +86,7 @@ GridLayout{
 
     onDistChanged: {
         limitDist = updateList(listDist,dist)
+        cpt++
         //console.log("limit :"+UID+" "+listDist.length+" "+limit.min+" "+limit.max)
     }
 
@@ -93,23 +94,36 @@ GridLayout{
     columns:  4
     Layout.fillWidth:  true
     Layout.fillHeight:   true
+    property int w_info: 100
     Label{
-        Layout.columnSpan: 4
+        Layout.columnSpan: 2
         text:qsTr(UID)
     }
     Label{
+        Layout.columnSpan: 2
+        text:qsTr("cpt : "+cpt)
+    }
+    Label{
+        Layout.minimumWidth: w_info
         text:qsTr("dDist : "+Math.ceil((limitDist.max-limitDist.min)))
     }
     Label{
+
       //  text:qsTr("avgDist : "+Math.ceil(limitDist.avg))
-          text:qsTr("Dist : "+dist/100)
+        Layout.minimumWidth: w_info
+        text:qsTr("Dist : "+dist/100)
     }
     Label{
-        text:qsTr("dRadio : "+Math.ceil((limitRadio.max-limitRadio.min)/1000))
+
+        Layout.minimumWidth: w_info
+        text:qsTr("dWeight : "+Math.ceil((limitRadio.max-limitRadio.min)*1000))
     }
     Label{
+        Layout.minimumWidth: w_info
         //text:qsTr("avgRadio : "+Math.ceil(limitRadio.avg/1000))
-        text:qsTr("Radio : "+Math.ceil(radio/1000))
+        text:qsTr("Weight : "+Math.ceil(radio*1000))
+
+
     }
 }
 

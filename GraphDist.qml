@@ -30,12 +30,24 @@ pris connaissance de la licence CeCILL, et que vous en avez accepté les
 termes.*/
 import QtQuick 2.9
 import QtCharts 2.2
+import QtQuick.Controls 1.4
 
 ChartView {
+    Row{
+        Button{
+            text:"reset dist axis"
+            onClicked: serieDist.updateAxis=true
+        }
+        Button{
+            text:"reset radio axis"
+            onClicked: serieRadio.updateAxis=true
+        }
+    }
     property real dist: 0
     property real radio: 0
     property real time_0: 0
     property real  time_limit: 30*1000
+
 
     function getSec(){
         return /*Math.ceil*/(new Date().getTime());
@@ -51,7 +63,7 @@ ChartView {
             time_0 = getSec();
         }
 
-      //  var i={'data':value,'time':getSec()}
+        //  var i={'data':value,'time':getSec()}
         serie.append(toMsecsSinceEpoch(new Date()),value)
     }
 
@@ -64,7 +76,7 @@ ChartView {
 
         if(p1.x - p0.x > time_limit){
             serie.remove(0)
-        }       
+        }
     }
 
     function getLimit(serie){
@@ -85,8 +97,16 @@ ChartView {
         serie.axisX.min = new Date(serie.axisX.max - time_limit)
         serie.avg = avg/i;
 
-        serie.y_values_min = min
-        serie.y_values_max = max
+        if(serie.updateAxis){
+            serie.updateAxis = false;false
+            serie.y_values_min = min
+            serie.y_values_max = max
+        }else{
+            serie.y_values_min = Math.min(serie.y_values_min,min);
+            serie.y_values_max = Math.max(serie.y_values_max,max);
+        }
+
+
     }
 
     function updateList(serie, value){
@@ -96,11 +116,18 @@ ChartView {
     }
 
     onRadioChanged: {
-        updateList(serieRadio,radio/1000)
+        var r = radio;
+        if(r != 0){
+            if(r > 30)
+                r = 30;
+            console.log("radio "+r);
+           updateList(serieRadio,r)
+        }
     }
 
     onDistChanged: {
-        updateList(serieDist,dist)
+        if(dist > 0)
+            updateList(serieDist,dist)
     }
 
 
@@ -111,36 +138,41 @@ ChartView {
 
     DateTimeAxis {
         id: axisX1
-        format:"hh:mm:ss:zzz"
+        format:"hh:mm:ss"
         tickCount: 1
-       //  titleText: "time (s)"
+        //  titleText: "time (s)"
 
     }
 
     LineSeries {
+        id:serieDist
         property real avg: 0
         property real y_values_min: 0
         property real y_values_max: 0
-
+        property bool updateAxis: true
 
         axisY:  ValueAxis{
             min:serieDist.y_values_min
             max:serieDist.y_values_max
-            titleText: "dist (cm)"
+
+            titleText: "<font color='"+labelsColor+"'>dist (cm)</font>"
+            labelsColor: serieDist.color
         }
         axisX: axisX1
-        id:serieDist
+
         name: "distance avg:"+Math.ceil(avg)
     }
 
     LineSeries {
         id:serieRadio
         property real y_values_min: 0
-        property real y_values_max: 0
+        property real y_values_max: 6
         property real avg: 0
+        property bool updateAxis: true
 
         axisYRight:  ValueAxis{
-            titleText: "pwr (dBm)"
+            titleText: "<font color='"+labelsColor+"'>idiff</font>"//"idiff"//"pwr (dBm)"
+            labelsColor: serieRadio.color
             min:serieRadio.y_values_min
             max:serieRadio.y_values_max
         }
@@ -151,3 +183,4 @@ ChartView {
     }
 
 }
+

@@ -36,7 +36,9 @@ termes.*/
 #include <QSerialPortInfo>
 #include <QVariant>
 #include <QTimer>
+#include <QThread>
 
+#include "setting.h"
 
 class baudrateList : public Qml_AbstracList<baudrateList,qint32>{
 
@@ -66,7 +68,22 @@ protected:
 };
 
 
-class PortAvaibleList : public Qml_AbstracList<PortAvaibleList,QSerialPortInfo>{
+struct serialPortInfo_extra : public QSerialPortInfo{
+    QString extra;
+
+    serialPortInfo_extra(const QString& extra):QSerialPortInfo(),extra(extra){}
+
+    serialPortInfo_extra(const QSerialPortInfo& cpy)
+        :QSerialPortInfo(cpy){}
+    serialPortInfo_extra():QSerialPortInfo(){}
+
+    bool serialIsNull()const{
+        return isNull() && extra.isNull();
+    }
+
+};
+
+class PortAvaibleList : public Qml_AbstracList<PortAvaibleList,serialPortInfo_extra>{
 
     Q_OBJECT
 
@@ -74,7 +91,14 @@ class PortAvaibleList : public Qml_AbstracList<PortAvaibleList,QSerialPortInfo>{
 
 public:
     QVariant getInfo(const typeData sInfo)const{
-        return QString("%1 (%2)").arg(sInfo.portName(),sInfo.description());
+       if(!sInfo.isNull())
+            return QString("%1 (%2)").arg(sInfo.portName(),sInfo.description());
+
+       return sInfo.extra;
+    }
+
+    int getNbPort(){
+        return list.count();
     }
 
     PortAvaibleList():Qml_AbstracList(this){
@@ -94,6 +118,7 @@ public:
 
             addData(i);
         }
+        addData(serialPortInfo_extra("file"));
         watchSerial.start();
 
     }
@@ -102,7 +127,7 @@ public:
 
     // Qml_AbstracList interface
 protected:
-    bool dataIsValid(const QSerialPortInfo data) const{return !data.isNull();}
+    bool dataIsValid(const serialPortInfo_extra data) const{return !data.serialIsNull();}
 private slots:
     void onUpdateList(){
 
@@ -118,6 +143,11 @@ private slots:
         for(auto i :l){
             list.append(i);
         }
+
+
+        if(!Setting::getInstance()->fileSimulation().isEmpty())
+            list.append((serialPortInfo_extra("Open file")));
+
         endResetModel();
 
     }
@@ -131,12 +161,14 @@ class serialDevice:public Qml_object
     QSerialPort serialPort;
     baudrateList BaudrateList;
     PortAvaibleList portAvaibleList;
-
+    QFile file;
+    QTextStream *data;
     Q_PROPERTY(bool cnxStatus READ cnxStatus WRITE setCnxStatus NOTIFY cnxStatusChanged)
     Q_PROPERTY(QString cnxInfo READ cnxInfo WRITE setCnxInfo NOTIFY cnxInfoChanged)
     bool m_cnxStatus;
 
     QString m_cnxInfo;
+
 
 public:
     Q_INVOKABLE void connectToSerialPort(int idxPort , int idxBaudRate);
@@ -179,10 +211,12 @@ private slots:
         emit cnxStatusChanged(m_cnxStatus);
     }
     void serPortDataReady(){
-        QByteArray buffer;
-
-        buffer = serialPort.readAll();
+        const QByteArray &buffer= serialPort.readAll();
         qDebug()<<Q_FUNC_INFO<<buffer;
+
+        if(data)
+            (*data)<<buffer;
+
         emit incomingData(buffer);
     }
 

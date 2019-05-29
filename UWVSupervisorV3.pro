@@ -29,7 +29,9 @@ SOURCES += \
     libdl/dl_writer_ascii.cpp \
     uwb_config.cpp \
     anchorslist.cpp \
-    img_provider.cpp
+    img_provider.cpp \
+    message_system.cpp \
+    setting.cpp
 
 RESOURCES += qml.qrc
 
@@ -66,6 +68,7 @@ HEADERS += \
     libdl/dl_writer_ascii.h \
     uwb_config.h \
     anchorslist.h \
-    img_provider.h
+    img_provider.h \
+    message_system.h \
+    setting.h
 
-DISTFILES +=

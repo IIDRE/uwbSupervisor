@@ -128,13 +128,13 @@ Popup{
                     //placeholderText: qsTr("UID :"+uid)
                     onEditTextChanged: {
                         var n = parseInt(editText,16);
-                        console.error("onTextEdited :"+editText + " "+n)
+                        console.log("onTextEdited :"+editText + " "+n)
                         if(isNaN(n) || n.toString(16) !== editText ){
-                            console.error("formating error :"+editText)
+                            console.log("formating error :"+editText)
                             editText = editText.substring(0,editText.length-1);
                         }
                         value=n.toString(16)
-                        console.error("onTextEdited :"+value)
+                        console.log("onTextEdited :"+value)
                     }
                     onCurrentIndexChanged: {
                         console.log(currentText)
@@ -144,13 +144,21 @@ Popup{
 
                     onVisibleChanged: {
                         console.log("onVisibleChanged "+uid)
+                        console.log("onVisibleChanged "+model)
+                        console.log("onVisibleChanged "+currentIndex)
+
+                        currentIndex=-1
+                        editText=uid
+                    }
+                    Component.onCompleted: {
+                        console.log("comboboc anchor onCompleted "+uid)
                         editText=uid
                     }
                 }
                 RadioButton {
                     id:button_anchor
                     text: qsTr("Anchor")
-                    checked: false
+                    checked: true
                     onVisibleChanged:  checked = type == AnchorType.ANCHOR
                     onCheckedChanged: type_selected=AnchorType.ANCHOR
                 }

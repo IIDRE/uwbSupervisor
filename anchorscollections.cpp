@@ -46,6 +46,7 @@ void AnchorsCollections::clearSessionAnchor()
     for(auto u:uids){
         if(!sessionAnchor[u]){
             AnchorFromDevice.removeAnchor(u);
+            AnchorFromDevice.clearAnchorData(u);
         }
         sessionAnchor[u] = false;
     }
@@ -54,14 +55,13 @@ void AnchorsCollections::clearSessionAnchor()
 AnchorsCollections::AnchorsCollections(const QString &nameObj, QObject *parent)
     : Qml_object(nameObj,parent)
 {
-
-
     connect(&tClearSession,&QTimer::timeout,this,&AnchorsCollections::timeOutSession);
     tClearSession.setSingleShot(false);
     tClearSession.setInterval(1000);
     tClearSession.start();
 
 
+    allAnchor.insert("anchorFromDeviceHistory",&AnchorFromDeviceHistory);
     allAnchor.insert("anchorFromDevice",&AnchorFromDevice);
     allAnchor.insert("anchorFromFile",&AnchorFromFile);
     allAnchor.insert("anchorPersistant",&AnchorPersistant);

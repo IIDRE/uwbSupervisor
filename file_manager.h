@@ -101,9 +101,9 @@ class file_manager : public Qml_object
     struct file_manager_matFile{
         listAnchorDataMatFile lAnchor4MatFile;
         mat_file *log;
-        QHash<long,bool>  anchorSession;
+        QHash<unsigned long,bool>  anchorSession;
 
-        void addAnchor(long UID,int dist,int X,int Y,int Z,int radio){
+        void addAnchor(unsigned long UID,int dist,int X,int Y,int Z,int radio){
             if(anchorSession[UID]){
                 //new session
                 write(0,0,0);
@@ -164,6 +164,7 @@ class file_manager : public Qml_object
     struct dxf_reader : public DL_CreationAdapter {
         int uid;
         AnchorsList &anchors;
+        int nbImport=0;
         int toCm(double m){
             return static_cast<int>(m*100);
         }
@@ -221,8 +222,8 @@ signals:
 public slots:
     void onCnxStatusChanged(bool cnxStatus);
     void setLastFile(QString lastFile);
-    void onDistInComming(long UID,int dist,int X,int Y,int Z,int radio);
-    void onPosInComming(int X,int Y,int Z);
+    void onDistInComming(unsigned long UID, int dist, int X, int Y, int Z, int radio);
+    void onPosInComming(int X, int Y, int Z, long time);
     void setLastEvent(QString lastEvent);
     void setOutputOctave(bool outputOctave)
     {

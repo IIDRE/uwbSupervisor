@@ -30,6 +30,83 @@ pris connaissance de la licence CeCILL, et que vous en avez accepté les
 termes.*/
 #include "uwb_config.h"
 
+void uwb_config::initTRxCode(int CHAN, int PRF)
+{
+    auto i = setOfItems["TRXcode"];
+    bool err = false;
+    if(PRF == 16){
+        switch (CHAN) {
+        case 1:setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{1,2})); break;
+        case 2:
+        case 5:setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{3,4}));break;
+        case 3:setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{5,6}));break;
+        case 4:
+        case 7:setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{7,8}));break;
+        default:err = true;
+        }
+    }
+    else if(PRF ==64){
+        switch (CHAN) {
+        case 1:
+        case 2:
+        case 3:
+        case 5:setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{9,10,11,12}));break;
+        case 4:
+        case 7:setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{17,18,19,20}));break;
+        default:err = true;
+        }
+    }else err = true;
+
+    if(!err){
+        delete i;
+    }else
+        qWarning()<<QString("config error from device CHAN %1 PRF %2").arg(CHAN).arg(PRF);return;
+}
+
+void uwb_config::initPlen(int BR)
+{
+    auto pPlen = setOfItems["PLEN"];
+
+    bool err = false;
+
+    if( BR==850 ){//850kbps
+        setOfItems.insert("PLEN",new uwb_config_item(ctx,"PLEN",{256,512,1024}));
+    }else if( BR==6800 ){//6800kbps
+        setOfItems.insert("PLEN",new uwb_config_item(ctx,"PLEN",{64,128,256}));
+    }else err = false;
+
+    if(!err){
+        auto pPac = setOfItems["PAC"];
+        delete  pPac;
+        setOfItems.insert("PAC",new uwb_config_item(ctx,"PAC",{}));
+
+        delete pPlen;
+    }else
+        qWarning()<<QString("config error from device BR %1").arg(BR);return;
+}
+
+void uwb_config::initPac(int Plen)
+{
+    auto i = setOfItems["PAC"];
+    bool err = false;
+
+
+    switch (Plen) {
+    case 64:
+    case 128:setOfItems.insert("PAC",new uwb_config_item(ctx,"PAC",{8}));break;
+    case 256:
+    case 512:setOfItems.insert("PAC",new uwb_config_item(ctx,"PAC",{16}));break;
+    case 1024:setOfItems.insert("PAC",new uwb_config_item(ctx,"PAC",{32}));break;
+    }
+
+    if(!err){
+        delete i;
+    }else
+        qWarning()<<QString("config error from device PLEN %1").arg(Plen);return;
+
+}
+
+
 void uwb_config::valueChange(QString nameOfValue, int idx)
 {
     qDebug()<<Q_FUNC_INFO<<" "<<nameOfValue<< " idx:"<<idx;
@@ -39,56 +116,19 @@ void uwb_config::valueChange(QString nameOfValue, int idx)
     //    setOfItems["TRXcode"] = new uwb_config_item(ctx,"TRXcode",{1,2,3,40});
 
     // Controle de la cohérence du TRXcode en fct du couple [CHAN;PRF]
-    if( nameOfValue=="CHAN"){
-        if( idx==0 && setOfItems["PRF"]->idx()==0 ) //CHAN1-PRF16
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{1,2}));
-        if( (idx==1 || idx==4) && setOfItems["PRF"]->idx()==0 ) //CHAN2-PRF16 ou CHAN5-PRF16
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{3,4}));
-        if( idx==2 && setOfItems["PRF"]->idx()==0 ) //CHAN3-PRF16
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{5,6}));
-        if( (idx==3 || idx==5) && setOfItems["PRF"]->idx()==0 ) //CHAN4-PRF16 ou CHAN7-PRF16
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{7,8}));
 
-        if( (idx==0 || idx==1 || idx==2 || idx==4) && setOfItems["PRF"]->idx()==1 ) //CHAN1-PRF64 ou CHAN2-PRF64 ou CHAN3-PRF64 ou CHAN5-PRF64
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{9,10,11,12}));
-        if( (idx==3 || idx==5) && setOfItems["PRF"]->idx()==1 ) //CHAN4-PRF64 ou CHAN7-PRF64
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{17,18,19,20}));
-    }
-    else if (nameOfValue=="PRF") {
-        if( idx==0 && setOfItems["CHAN"]->idx()==0)//PRF16-CHAN1
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{1,2}));
-        if( idx==0 && (setOfItems["CHAN"]->idx()==1 || setOfItems["CHAN"]->idx()==4) )//PRF16-CHAN2 ou PRF16-CHAN5
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{3,4}));
-        if( idx==0 && setOfItems["CHAN"]->idx()==2)//PRF16-CHAN3
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{5,6}));
-        if( idx==0 && (setOfItems["CHAN"]->idx()==3 || setOfItems["CHAN"]->idx()==5) )//PRF16-CHAN4 ou PRF16-CHAN7
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{7,8}));
-
-        if( idx==1 && (setOfItems["CHAN"]->idx()==0 || setOfItems["CHAN"]->idx()==1 || setOfItems["CHAN"]->idx()==2 || setOfItems["CHAN"]->idx()==4 ) )//PRF64-CHAN2
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{9,10,11,12}));
-        if( idx==1 && (setOfItems["CHAN"]->idx()==3 || setOfItems["CHAN"]->idx()==5 ) )//PRF64-CHAN4 ou PRF64-CHAN7
-            setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{17,18,19,20}));
-    }
-    else if (nameOfValue=="BR") {
-        if( idx==0 )//850kbps
-            setOfItems.insert("PLEN",new uwb_config_item(ctx,"PLEN",{256,512,1024}));
-        if( idx==1 )//6800kbps
-            setOfItems.insert("PLEN",new uwb_config_item(ctx,"PLEN",{64,128,256}));
-    }
-    else if (nameOfValue=="PLEN") {
-        if( idx==0 || idx==1)//64 ou 128
-            setOfItems.insert("PAC",new uwb_config_item(ctx,"PAC",{8}));
-        if( idx==2 )//256 ou 512
-            setOfItems.insert("PAC",new uwb_config_item(ctx,"PAC",{16}));
-        if( idx==4 )//1024
-            setOfItems.insert("PAC",new uwb_config_item(ctx,"PAC",{32}));
+    if(nameOfValue == "CHAN" || nameOfValue == "PRF"){
+        initTRxCode(setOfItems["CHAN"]->getCurrentValue(),setOfItems["PRF"]->getCurrentValue());
+    }else if (nameOfValue=="BR") {
+        initPlen(setOfItems["BR"]->getCurrentValue());
+    }else if (nameOfValue=="PLEN") {
+        initPac(setOfItems["PLEN"]->getCurrentValue());
     }
 }
 
 uwb_config::uwb_config(const QString &nameObj,QQmlContext *ctx)
     :Qml_object(nameObj),ctx(ctx)
 {
-
     setOfItems.insert("CHAN",new uwb_config_item(ctx,"CHAN",{1,2,3,4,5,7}));
     setOfItems.insert("PRF",new uwb_config_item(ctx,"PRF",{16,64}));
     setOfItems.insert("TRXcode",new uwb_config_item(ctx,"TRXcode",{}));

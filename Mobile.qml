@@ -31,9 +31,41 @@ termes.*/
 import QtQuick 2.0
 
 Rectangle {
+    id:root
     property point pos: Qt.point(0,0)
+    property int  time : 0
     property real size : 5
     property string info: ""
+    property real gain : 0.1
+
+    Item{
+        id:lowPassFilter_Y
+        property point lastPos: Qt.point(0,0)
+        property real last_t: 0
+
+
+
+        function fp(t,_pos){
+
+            var _y=0.0;
+            var _x=0.0;
+
+            if(last_t > 0){
+                var dt = t- last_t
+                var g = dt/(root.gain + dt)
+                _y = lastPos.y + g*(_pos.y - lastPos.y)
+                _x = lastPos.x + g*(_pos.x - lastPos.x)
+            }else{
+                _y = _pos.y;
+                _x = _pos.x;
+            }
+            lastPos=Qt.point(_x,_y)
+            last_t = t
+
+            return lastPos
+        }
+    }
+
     radius: width/2
     color: "chocolate"
     height: size
@@ -41,6 +73,13 @@ Rectangle {
 
     x:(pos.x-(width/2))
     y:(pos.y-(height/2))
+
+    onTimeChanged: {
+        console.log("time changed :"+time)
+        var p = lowPassFilter_Y.fp(time,pos);
+        root.x =p.x
+        root.y=p.y
+    }
 
 
 }

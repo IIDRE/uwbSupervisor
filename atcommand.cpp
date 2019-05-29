@@ -332,7 +332,7 @@ bool AtCommand::setAtPrefix(bool p)
 
 bool AtCommand::parse(const QByteArray &source, int &index)
 {
-    int offset;
+    //int offset;
     AtCommand::fsmstate state;
     int sz = source.length();
     bool continueParse;

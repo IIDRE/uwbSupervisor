@@ -29,13 +29,20 @@ Le fait que vous puissiez accéder à cet en-tête signifie que vous avez
 pris connaissance de la licence CeCILL, et que vous en avez accepté les
 termes.*/
 import QtQuick 2.0
+import QtQuick.Layouts 1.3
 
 Item {
     id:root
     property real zoom: 1
     property point pMapRef:Qt.point(0,0)
     property point pZoneRef:Qt.point(0,0)
+    property real mouse_translate_X: 0
+    property real mouse_translate_Y: 0
 
+    onMouse_translate_XChanged: setScale()
+
+
+    onMouse_translate_YChanged: setScale()
 
     function getXmap(_x){
         return (_x/zoom) - _translate.x
@@ -59,8 +66,8 @@ Item {
 
     function setScale(){
 
-        _translate.x = (pZoneRef.x/zoom)-pMapRef.x
-        _translate.y = (pZoneRef.y/zoom)-pMapRef.y
+        _translate.x = ((pZoneRef.x-root.mouse_translate_X)/zoom)-pMapRef.x
+        _translate.y = ((pZoneRef.y-root.mouse_translate_Y)/zoom)-pMapRef.y
 
         console.log("set zoom  zoom "+zoom+" to "+_translate.x+";"+_translate.y)
 

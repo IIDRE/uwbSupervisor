@@ -38,10 +38,12 @@ Rectangle {
     property real dist: 0
     property string id_anchor: "xxxxx"
     property int radio: 0
+    property real  dist_weight: 1
     property alias print_info: zoneMouse.containsMouse
     property string description: ""
     property bool showInfo: false
     property real size: 5
+    property bool showNlos : true
 
     signal clicked(string uid, point coord)
 
@@ -52,11 +54,13 @@ Rectangle {
     height: width
     x:(pos.x-(width/2))
     y:(pos.y-(height/2))
+    opacity: 0.9*root.dist_weight + 0.1;
 
 //    x:pos.x
 //    y:pos.y
 
     onRadioChanged: {
+        console.log("radio :"+id_anchor+" "+radio)
         if(print_info){
             info_txt.text = formatId()
         }
@@ -71,34 +75,65 @@ Rectangle {
             s += " "+description
 
         if(radio != 0){
-            var r = radio/1000
+            var r = radio
             s = s + r.toFixed(1)
         }
 
         return s;
     }
 
+
     Rectangle{
         border.color: "brown"
+
+        //poids visu par contours
         color: "#00000000"    // ARGB fully transparent
+       // opacity: 0.8*root.dist_weight + 0.2;
+        border.width: -9*root.dist_weight+10
+
+
         radius: width/2
         anchors.centerIn: parent
         width: parent.dist*2
         height: parent.dist*2
 
+
     }
+
+
     Label {
-        rotation: 360-mapControls.rotationAction
+   //     rotation: 360-mapControls.rotationAction
+
+        function getR_z(){
+            var o = 360
+            if(!mapControls.mirror){
+                if(mapControls.rotationAction == 90 || mapControls.rotationAction == 270 ){
+                     o = 180
+                }
+            }
+            console.log("gerRZ " + o + " " + mapControls.rotationAction)
+            return o - mapControls.rotationAction
+        }
+
         visible: showInfo
         anchors.right: root.left
         anchors.bottom: root.top
+        property real rot_angle_z: getR_z()
+        property real rot_angle_y: mapControls.mirror ? 180:0
+        property real rot_angle_x: -180
+
+
         id:info_txt
-        text: formatId()
+        text: formatId()//"rot : x:"+rot_angle_x +" y:"+rot_angle_y+" z:"+rot_angle_z//formatId()
         padding:5
         background: Rectangle{
             border.color: "black"
 
         }
+        transform: [Rotation { origin.x: info_txt.width/2; origin.y: info_txt.height/2 ; axis { x: 0; y: 0; z: 1 } angle: info_txt.rot_angle_z}
+            ,Rotation{ origin.x: info_txt.width/2; origin.y: info_txt.height/2 ; axis { x: 0; y: 1; z: 0 } angle: info_txt.rot_angle_y }
+            ,Rotation{ origin.x: info_txt.width/2; origin.y: info_txt.height/2 ; axis { x: 1; y: 0; z: 0 } angle: info_txt.rot_angle_x }]
+
         onVisibleChanged: {
             anchors.margins =0
             if(visible ) {

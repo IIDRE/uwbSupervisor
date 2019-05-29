@@ -134,6 +134,7 @@ protected:
 
 
     void removeAll(){
+        if(rowCount() <= 0) return ;
         beginRemoveRows(QModelIndex(),0,rowCount()-1);
         list.clear();
         endRemoveRows();

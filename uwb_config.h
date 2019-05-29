@@ -56,6 +56,8 @@ public:
     }
 
     qint32 getCurrentValue(){
+        if(m_idx <0 || m_idx>list.length()) return 0;
+
         return list[m_idx];
     }
 public slots:
@@ -90,6 +92,11 @@ public:
         return m_forceConfigure;
     }
 
+    void valueChangeByValue(QString nameOfValue, int value);
+
+    void initTRxCode(int CHAN , int PRF );
+    void initPlen(int BR);
+    void initPac(int Plen);
 public slots:
     void setForceConfigure(bool forceConfigure)
     {

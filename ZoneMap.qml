@@ -46,11 +46,17 @@ RowLayout{
             root.zoomActiv = false
             zoomAdjustSet = false;
             root.zoom = root.factor
+            map.mouse_translate_X = 0
+            map.mouse_translate_Y = 0
             map.setScale(Qt.point(0,0),root.factor)
+            zoneMapMouse.mouseX_lastMove = 0
+            zoneMapMouse.mouseY_lastMove = 0
+
         }
 
 
         onWinGraphShowChanged: zone_map.showGraph =winGraphShow
+
     }
     WinGraph{
         id:windows_graph
@@ -70,203 +76,280 @@ RowLayout{
         Layout.fillHeight: true
         Layout.fillWidth: true
         color:"white"
-        Rectangle{
-            id :root
-            rotation: mapControls.rotationAction
-            property point pMapMax: controler_anchor_collection.pMax
-            property point pMapMin: controler_anchor_collection.pMin
 
-            property point pMapRef:Qt.point(0,0)
-            property point pZoneRef:Qt.point(0,0)
-
-
-            property real  factor: 1.0
-            property real zoom: 0
-            property bool zoomActiv: false
-
+         Rectangle{
             border{color: "grey";width:5}
             anchors.centerIn: parent;
-            height: parent.height*0.9
-            width:  parent.width*0.9
-            onPMapMaxChanged: updateScale()
-            onPMapMinChanged: updateScale()
-            onWidthChanged: updateScale()
-            onHeightChanged: updateScale()
-
-            Image {
-                id: mapImg
-                anchors.centerIn: parent
-                height: parent.height*0.99
-                width:  parent.width*0.99
-                source: "image://ImgMap/"+controler_file_manager.lastFile
-                onSourceChanged: console.log("image source change "+source)
-            }
-
-
-            onRotationChanged: {
-                console.log(rotation)
-            }
-
-
-            function updateScale(){
-
-                if(zoomActiv) return;
-
-                console.log("img:"+root.width+","+root.height+" updateScale max X:"+pMapMax.x+" max Y:"+pMapMax.y+" min X"+pMapMin.x+" min Y:"+pMapMin.y+" "   )
-
-                var fx = Math.abs((pMapMax.x-pMapMin.x)/root.width)
-                var fy = Math.abs((pMapMax.y-pMapMin.y)/root.height)
-
-                factor = Math.max(fx,fy)
-
-                if(factor===0){
-                    factor =1;
-                }
-                else{
-                    factor = 1/factor
-                }
-
-
-                zoom = factor
-
-                pMapRef.x = (Math.abs(pMapMax.x) - Math.abs(pMapMin.x))/2
-                pMapRef.y = (Math.abs(pMapMax.y) - Math.abs(pMapMin.y))/2
-
-                pZoneRef.x = (root.width/2)
-                pZoneRef.y = (root.height/2)
-
-
-            }
-
-            MouseArea{
-
-                id:zoneMapMouse
-                anchors.fill:parent
-                hoverEnabled: mapControls.coordMouseSet
-                onWheel:{
-
-                    if(root.pMapMax === root.pMapMin) return ;
-
-                    root.zoomActiv = true
-                    var x = (root.pMapMax.x - root.pMapMin.x)/2
-                    var y = (root.pMapMax.y - root.pMapMin.y)/2
-
-                    var z = root.zoom +  (wheel.angleDelta.y / 4000)
-
-                    if(z>0)  root.zoom = z
-
-                    console.log("set zoom factor : "+root.factor)
-                    map.setScale()
-                }
+            height: parent.height*0.95
+            width:  parent.width*0.95
+            Rectangle{
+                id :root
 
                 Rectangle{
-
-                    id:cursorCood
-                    width: 1
-                    height: width
+                    id :rot_orig
+                    x:parent.width/2
+                    y:parent.height/2
+                    height: 0
+                    width: 0
+                    z:100
                     color: "transparent"
-                    x:parent.mouseX
-                    y:parent.mouseY
 
-                    ToolTip {
+                }
 
-                        parent: parent.handle
-                        visible: zoneMapMouse.containsMouse
-                        text:  qsTr("("+Math.ceil(map.getXmap(parent.x))
-                                    +","
-                                    +Math.ceil(map.getYmap(parent.y))+")")
+                transform: [Rotation { origin.x: rot_orig.x; origin.y: rot_orig.y; axis { x: 0; y: 0; z: 1 } angle: mapControls.rotationAction }
+                    ,Rotation{ origin.x: rot_orig.x; origin.y: rot_orig.y; axis { x: 0; y: 1; z: 0 } angle: mapControls.mirror ? 180:0 }
+                    ,Rotation{ origin.x: rot_orig.x; origin.y: rot_orig.y; axis { x: 1; y: 0; z: 0 } angle:  180 }]
 
+                //rotation: mapControls.rotationAction
+                property point pMapMax: controler_anchor_collection.pMax
+                property point pMapMin: controler_anchor_collection.pMin
+
+                property point pMapRef:Qt.point(0,0)
+                property point pZoneRef:Qt.point(0,0)
+
+
+                property real  factor: 1.0
+                property real zoom: 0
+                property bool zoomActiv: false
+
+                anchors.centerIn: parent;
+                height: parent.height*0.95
+                width:  parent.width*0.95
+
+                onPMapMaxChanged: updateScale()
+                onPMapMinChanged: updateScale()
+                onWidthChanged: updateScale()
+                onHeightChanged: updateScale()
+
+                Image {
+                    property real rot: mapControls.rotationAction
+                    onRotChanged: {
+                        var t = height
+                        height = width
+                        width = t
                     }
+
+                    id: mapImg
+                    anchors.centerIn: parent
+                    height: parent.height*0.99
+                    width:  parent.width*0.99
+                    source: "image://ImgMap/"+controler_file_manager.lastFile
+                    onSourceChanged: console.log("image source change "+source)
                 }
 
 
-            }
-
-            Map{
-                id:map
-                pMapRef: root.pMapRef
-                pZoneRef: root.pZoneRef
-                zoom: root.zoom
-
-
-
-                Repeater{
-                    id :anchorFromDevice
-                    model:model_anchorFromDevice
-
-                    delegate: Anchor{
-
-                        pos :  Qt.point(model.X,model.Y)
-                        dist: mapControls.distanceSet?model.Dist*root.zoom:0
-                        id_anchor: model.UID
-                        radio: model.Radio
-                        scale : 1/root.zoom
-                        showInfo: mapControls.infoSet
-
-                    }
+                onRotationChanged: {
+                    console.log(rotation)
                 }
 
-                DialogAnchorControl{
-                    id:dialogAnchorControl
-                    visible: false;
-                    maxHeight: root.height
-                    maxWidht: root.width
-                    onValidaded: {
-                        controler_anchor_collection.update_anchor(idx,uid,description,type)
-                        if(type === AnchorType.ANCHOR){
-                            controler_device.setPosAnchor(uid,pos.x,pos.y,0)
+
+                function updateScale(){
+
+                    if(zoomActiv) return;
+
+                    console.log("img:"+root.width+";"+root.height+" updateScale max X:"+pMapMax.x+" max Y:"+pMapMax.y+" min X"+pMapMin.x+" min Y:"+pMapMin.y+" "   )
+
+                    var fx = Math.abs((pMapMax.x-pMapMin.x)/root.width)
+                    var fy = Math.abs((pMapMax.y-pMapMin.y)/root.height)
+
+                    factor = Math.max(fx,fy)
+
+                    if(factor===0){
+                        factor =1;
+                    }
+                    else{
+                        factor = 1/factor
+                    }
+
+
+                    zoom = factor
+
+                    pMapRef.x = ((pMapMax.x-pMapMin.x)/2)+pMapMin.x  //(Math.abs(pMapMax.x) - Math.abs(pMapMin.x))/2
+                    pMapRef.y = ((pMapMax.y-pMapMin.y)/2)+pMapMin.y
+
+                    pZoneRef.x = (root.width/2)
+                    pZoneRef.y = (root.height/2)
+
+
+                }
+
+                MouseArea{
+
+                    property bool moveMap: false
+                    property real mouseX_origin: 0
+                    property real mouseY_origin: 0
+
+                    property real mouseX_lastMove: 0
+                    property real mouseY_lastMove: 0
+
+                    id:zoneMapMouse
+                    anchors.fill:parent
+                    hoverEnabled: mapControls.coordMouseSet
+                    onWheel:{
+
+                        if(root.pMapMax === root.pMapMin) return ;
+
+                        root.zoomActiv = true
+                        var x = (root.pMapMax.x - root.pMapMin.x)/2
+                        var y = (root.pMapMax.y - root.pMapMin.y)/2
+
+                        var z = root.zoom +  (wheel.angleDelta.y / 2000)
+
+                        if(z>0)  root.zoom = z
+
+                        console.log("set zoom factor : "+root.factor)
+                        map.setScale()
+                    }
+
+                    onPressed: {
+
+                        cursorShape=Qt.ClosedHandCursor
+                        mouseX_origin = mouseX
+                        mouseY_origin = mouseY
+                        moveMap = true
+                    }
+
+                    onReleased: {
+                        moveMap = false
+                        cursorShape=Qt.ArrowCursor
+                        mouseX_lastMove += mouseX_origin-mouseX
+                        mouseY_lastMove += mouseY_origin-mouseY
+
+                        mouseX_origin = 0
+                        mouseY_origin = 0
+                    }
+
+                    onMouseXChanged: {
+                        if(moveMap){
+                            map.mouse_translate_X = mouseX_origin-mouseX+mouseX_lastMove
+                            map.mouse_translate_Y = mouseY_origin-mouse.y+mouseY_lastMove
                         }
                     }
 
-                }
 
+                    Rectangle{
 
-                Repeater{
-                    id :anchorFromFile
-                    model:model_anchorFromFile
-
-                    delegate: Anchor{
-                        idx:index
-                        description: model.Descrip
-                        color: "green"
-                        id_anchor: model.UID
-
-                        pos : Qt.point(model.X,model.Y)
-                        scale : 1/root.zoom
-
-
-                        onPosChanged: console.log("map pos:("+model.UID+")"+model.X+" "+model.Y)
-                        onClicked: {
-                            console.log("anchor "+uid+"config pos:"+pos.x+" "+pos.y+" type "+Type)
-                            dialogAnchorControl.openDialogAnchor(index,uid,pos,Descrip,Type,pos)
-                        }
-                        showInfo: mapControls.infoSet
-
-
-                    }
-                }
-
-                Mobile{
-                    pos: Qt.point(controler_device.coord.x,controler_device.coord.y)
-                    color: "transparent"
-                    border.color: "red"
-                    border.width: 2
-                    scale : 1/root.zoom
-                }
-
-
-                Repeater{
-                    id :deviceFromAnchor
-                    model:model_deviceFromAnchor
-
-                    delegate: Mobile{
-                        pos: Qt.point(model.X,model.Y)
+                        id:cursorCood
+                        width: 1
+                        height: width
                         color: "transparent"
-                        border.color: "green"
+                        x:parent.mouseX
+                        y:parent.mouseY
+
+                        ToolTip {
+
+                            parent: parent.handle
+                            visible: zoneMapMouse.containsMouse
+                            text:  qsTr("("+Math.ceil(map.getXmap(parent.x))
+                                        +","
+                                        +Math.ceil(map.getYmap(parent.y))+")")
+
+
+                        }
+                    }
+
+
+                }
+
+                Map{
+                    id:map
+                    pMapRef: root.pMapRef
+                    pZoneRef: root.pZoneRef
+                    zoom: root.zoom
+
+
+
+                    Repeater{
+                        id :anchorFromDevice
+                        model:model_anchorFromDevice
+
+                        delegate: Anchor{
+
+                            pos :  Qt.point(model.X,model.Y)
+                            dist: mapControls.distanceSet?model.Dist*root.zoom:0
+                            id_anchor: model.UID
+                            radio: model.Radio
+                            scale : 1/root.zoom
+                            showInfo: mapControls.infoSet
+                            dist_weight: model.Weight
+                        }
+                    }
+
+                    DialogAnchorControl{
+                        id:dialogAnchorControl
+                        visible: false;
+                        maxHeight: root.height
+                        maxWidht: root.width
+                        onValidaded: {
+                            controler_anchor_collection.update_anchor(idx,uid,description,type)
+                            if(type === AnchorType.ANCHOR){
+                                controler_device.setPosAnchor(uid,pos.x,pos.y,0)
+                            }
+                        }
+
+                    }
+
+
+                    Repeater{
+                        id :anchorFromFile
+                        model:model_anchorFromFile
+
+                        delegate: Anchor{
+                            idx:index
+                            description: model.Descrip
+                            color: "green"
+                            id_anchor: model.UID
+
+                            pos : Qt.point(model.X,model.Y)
+                            scale : 1/root.zoom
+
+
+                            onPosChanged: console.log("map pos:("+model.UID+")"+model.X+" "+model.Y)
+                            onClicked: {
+                                console.log("anchor "+uid+"config pos:"+pos.x+" "+pos.y+" type "+Type)
+                                dialogAnchorControl.openDialogAnchor(index,uid,pos,Descrip,Type,pos)
+                            }
+                            showInfo: mapControls.infoSet
+                        }
+                    }
+
+                    Mobile{
+                        pos: Qt.point(controler_device.coord.x,controler_device.coord.y)
+                        time: controler_device.time
+                        color: "transparent"
+                        border.color: "red"
                         border.width: 2
                         scale : 1/root.zoom
+                        gain:controler_settings.filterValue*100
                     }
 
+
+                    Mobile{
+                        pos: Qt.point(controler_device.coord.x,controler_device.coord.y)
+                        time: controler_device.time
+                        color: "transparent"
+                        border.color: "blue"
+                        border.width: 2
+                        scale : 1/root.zoom
+                        visible: controler_settings.duoPoint
+                        gain:0
+                    }
+
+                    Repeater{
+                        id :deviceFromAnchor
+                        model:model_deviceFromAnchor
+
+                        delegate: Mobile{
+                            pos: Qt.point(model.X,model.Y)
+                            time: controler_device.time
+                            color: "transparent"
+                            border.color: "green"
+                            border.width: 2
+                            scale : 1/root.zoom
+                            gain:controler_settings.filterValue*100
+                        }
+
+                    }
                 }
             }
         }

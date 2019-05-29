@@ -85,8 +85,19 @@ ColumnLayout{
 
             bp_state = false
         }
-        icon_source: "images/icon_rotation_50.png"
+        icon_source: mirror ? "images/icon_rotation2_50.png": "images/icon_rotation_50.png"
         info:"Rotate map"
+    }
+
+    property bool mirror: false
+    MapControlButton{
+        bp_state: mirror
+        onBp_stateChanged: {
+            mirror = bp_state
+
+        }
+        icon_source: mirror ? "images/icon_flip2_50.png" : "images/icon_flip_50.png"
+        info:"flip map"
     }
 
     property bool winGraphShow: false
@@ -96,6 +107,8 @@ ColumnLayout{
         icon_source: "images/icon_graph_50.png"
         info:"Trace graphs and trajectory"
     }
+
+
 
     Rectangle{
   //      color:"transparent"

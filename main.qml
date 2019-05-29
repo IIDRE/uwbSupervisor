@@ -30,19 +30,88 @@ pris connaissance de la licence CeCILL, et que vous en avez accepté les
 termes.*/
 import QtQuick 2.11
 import QtQuick.Window 2.11
-import QtQuick.Controls 1.4
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.0
-
+import QtQuick.Window 2.2
 
 ApplicationWindow{
+    id:app_windows
     visible: true
-    //    width: 640
-    //    height: 480
+    width: 1200
+    height: 700
     title: qsTr("RTLS by IIDRE")
-    // flags: Qt.Window
+    flags: Qt.Window
     visibility: Window.Windowed
 
+    Connections {
+        target: controler_message_system
+        onCritalMessage: {
+            popup.printMsg(msg)
+        }
+    }
 
+    Popup {
+        function printMsg(msg){
+            popup.open()
+            info.text = qsTr(msg)
+        }
+
+        id: popup
+        x: app_windows.width/2
+        y: app_windows.height/2
+        width: 0
+        height: 0
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        margins:0
+        padding: 0
+        Rectangle{
+            id:popup_frame
+            //anchors.fill:parent
+            width: 400
+            height: 110
+            radius: 20
+            border.color: "grey"
+            border.width: 5
+
+            MouseArea{
+                anchors.fill: parent
+                onClicked: popup.close()
+            }
+
+            gradient: Gradient {
+                GradientStop { position: 2; color:"#e44f3f" }
+                GradientStop { position: 0 ;color: "#ffffff"}
+            }
+
+
+
+            RowLayout{
+                anchors.fill:parent
+
+                Image {
+                    Layout.leftMargin: 10
+                    height: 50
+                    width:  50
+                    id: img
+                    source: "images/warning.png"
+                }
+                Text {
+                    id: info
+                    text:"aaaaa"
+                    onTextChanged: {
+                        var w = paintedWidth + 200
+                        console.log("popup msg h:"+paintedHeight+" w:"+paintedWidth)
+                        popup_frame.width = Math.max(popup_frame.width,w)
+                    }
+                }
+
+            }
+        }
+
+
+    }
 
     RowLayout {
         id: layout
@@ -115,11 +184,11 @@ ApplicationWindow{
                 }
                 Repeater{
                     Layout.maximumWidth: 300
-                    model:model_anchorFromDevice
+                    model:model_anchorFromDeviceHistory
                     delegate: AnchorDetails{
                         uid:model.UID
                         dist:model.Dist
-                        radio:model.Radio
+                        radio:model.Weight
                     }
                 }
 

@@ -34,21 +34,43 @@ termes.*/
 
 void serialDevice::connectToSerialPort(int idxPort, int idxBaudRate)
 {
-    qDebug()<<Q_FUNC_INFO<<portAvaibleList.getItem(idxPort).systemLocation()<<BaudrateList.getItem(idxBaudRate);
 
-    serialPort.setBaudRate(BaudrateList.getItem(idxBaudRate));
-    serialPort.setPortName(portAvaibleList.getItem(idxPort).systemLocation());
+    auto const &port = portAvaibleList.getItem(idxPort);
+
+    if(!port.isNull()){
+        qDebug()<<Q_FUNC_INFO<<portAvaibleList.getItem(idxPort).systemLocation()<<BaudrateList.getItem(idxBaudRate);
+
+        serialPort.setBaudRate(BaudrateList.getItem(idxBaudRate));
+        serialPort.setPortName(portAvaibleList.getItem(idxPort).systemLocation());
 
 
-    bool bo = serialPort.open(QSerialPort::ReadWrite);
+        bool bo = serialPort.open(QSerialPort::ReadWrite);
 
-    setCnxStatus(bo);
+        setCnxStatus(bo);
+
+    }else{
+        qDebug()<<"open other "<<port.extra;
+
+    }
 
 }
 
 serialDevice::serialDevice(const QString qmlControlerName)
     :Qml_object (qmlControlerName)
 {
+
+
+     QString filename=QString("%1.serial.log").arg(QDateTime::currentDateTime().toString("yyyyMMddhhmmss"));
+    file .setFileName(filename);
+    if (file.open(QIODevice::ReadWrite | QIODevice::Text)){
+        data = new QTextStream(&file);
+    }else{
+        qWarning()<<"Impossible d'ouvrir le fichier";
+        data = nullptr;
+    }
+
+
+
     connect(&serialPort,&QSerialPort::errorOccurred,this,&serialDevice::onSerialPortError);
     connect(&serialPort,&QSerialPort::readyRead,this,&serialDevice::serPortDataReady);
 
@@ -67,7 +89,8 @@ void serialDevice::onSerialPortError(QSerialPort::SerialPortError portError)
        setCnxInfo("");
        return;
     }
-    qWarning()<<"SERIAL PORT ERROR [" << serialPort.errorString() << "]. CLOSING";
+    qDebug()<<"SERIAL PORT ERROR [" << serialPort.errorString() << "]. CLOSING";
+    qCritical()<<serialPort.errorString();
     setCnxInfo(serialPort.errorString());
     diconnectSerialPort();
 }

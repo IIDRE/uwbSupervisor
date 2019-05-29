@@ -47,6 +47,7 @@ class AnchorsCollections : public Qml_object
 
 
     QTimer tClearSession;
+    AnchorsList AnchorFromDeviceHistory;
     AnchorsList AnchorFromDevice;
     AnchorsList AnchorFromFile;
     AnchorsList DeviceFromAnchor;
@@ -77,22 +78,23 @@ signals:
 public slots:
 
     void onPosDeviceFromAnchorInComming(long UID,int X,int Y,int Z){
-        DeviceFromAnchor.UpdateAnchor(UID,0,X,Y,Z,0);
+        DeviceFromAnchor.UpdateAnchor(UID,0,X,Y,Z,0,0);
     }
 
-    void onDistInComming(long UID,int dist,int X,int Y,int Z,int radio){
+    void onDistInComming(unsigned long UID,int dist,int X,int Y,int Z,int radio,float weight){
         tClearSession.start();
 
         if(sessionAnchor[UID])
             clearSessionAnchor();
 
         sessionAnchor[UID]=true;
-        AnchorFromDevice.UpdateAnchor(UID,dist,X,Y,Z,radio);
+        AnchorFromDevice.UpdateAnchor(UID,dist,X,Y,Z,radio,weight);
+        AnchorFromDeviceHistory.UpdateAnchor(UID,dist,X,Y,Z,radio,weight);
 
         qint64 t = QDateTime::currentMSecsSinceEpoch();
         if(t - anchorPersistanTime[UID] >= 300 ){
             anchorPersistanTime[UID]  =t;
-            AnchorPersistant.UpdateAnchor(UID,dist,X,Y,Z,radio);
+            AnchorPersistant.UpdateAnchor(UID,dist,X,Y,Z,radio,weight);
         }
 
     }

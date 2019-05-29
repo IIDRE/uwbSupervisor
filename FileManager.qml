@@ -36,6 +36,7 @@ import QtGraphicalEffects 1.0
 import QtQuick.Dialogs 1.3
 GridLayout {
 
+    property bool deviceBusy: false
     property bool deviceConnected: false
     property string lastEvent: controler_file_manager.lastEvent
 
@@ -91,6 +92,14 @@ GridLayout {
         }
     }
 
+    Connections {
+        target: controler_device
+        onBusy: {
+            console.log("device busy "+status)
+            deviceBusy = status;
+        }
+    }
+
     Button_fileManager{
         id:importFromFlash
         Layout.fillWidth:  true
@@ -98,7 +107,7 @@ GridLayout {
         f:fileDialog
         filters: ["json Files (*.json)"]
         selectExisting: false
-        enabled: deviceConnected
+        enabled: deviceConnected && !deviceBusy
         onReady:{
             controler_file_manager.importDataFromFlash(fileURL)
             label_lastEvent.text=qsTr(text+":"+controler_file_manager.lastFile)
@@ -112,7 +121,7 @@ GridLayout {
         text:"Export infra (flash)"
         f:fileDialog
         filters: ["json Files (*.json)"]
-        enabled: deviceConnected
+        enabled: deviceConnected && !deviceBusy
         onReady:{
             controler_file_manager.exportDataToFlash(fileURL)
             label_lastEvent.text=qsTr(text+":"+controler_file_manager.lastFile)

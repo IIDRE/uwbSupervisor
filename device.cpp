@@ -32,7 +32,7 @@ termes.*/
 
 
 
-QHash<long, anchor> device::getAnchorPos() const
+QHash<unsigned long, anchor> device::getAnchorPos() const
 {
     return anchorPos;
 }
@@ -40,10 +40,12 @@ QHash<long, anchor> device::getAnchorPos() const
 void device::setPosAnchor(QString UID, int X, int Y, int Z)
 {
     bool bok;
-    long _uid = UID.toLong(&bok,16);
+    unsigned long _uid = UID.toULong(&bok,16);
     if(!bok || !_uid ) return;
 
     setPosAnchor(_uid,X,Y,Z);
+    //qDebug() <<Q_FUNC_INFO<< m_listOfID.indexOf(QRegExp(UID, Qt::CaseInsensitive, QRegExp::W3CXmlSchema11), 0)<<UID;
+
 }
 
 void device::configDevice()
@@ -54,13 +56,21 @@ void device::configDevice()
 
 }
 
-void device::setPosAnchor(long UID, int X, int Y, int Z)
+void device::setPosAnchor(unsigned long UID, int X, int Y, int Z)
 {
     QByteArray cmd = QString("AT+POS=%1,%2,%3,%4\r\n")
             .arg(UID,0,16).arg(X).arg(Y).arg(Z)
             .toLatin1();
 
-    sendCommand(cmd);
+
+    configList.append(cmd);
+
+    if(!configPosInProgress){
+        configPosInProgress = true;
+        sendNextConfig();
+    }
+    emit busy(configPosInProgress);
+
 }
 
 void device::setPosAnchor(anchor &pos)
@@ -73,7 +83,13 @@ bool device::rsp_device_ok(AtCommand &at)
     Q_UNUSED(at)
     qDebug()<<Q_FUNC_INFO;
 
+    if(configPosInProgress){
+        nbConfigPos++;
+    }
+
     sendNextConfig();
+
+
 
     return true;
 }
@@ -83,7 +99,8 @@ bool device::rsp_device_error(AtCommand &at)
     Q_UNUSED(at)
     qDebug()<<Q_FUNC_INFO;
 
-    sendSameConfig();
+   // sendSameConfig();
+    sendNextConfig();
     return true;
 }
 
@@ -93,7 +110,7 @@ bool device::rsp_device_DIST(AtCommand &at)
     anchor Anchor;
     int dist,radio;
     bool bok;
-
+    float weight;
 
     enum{
         DIST_TIME=0,
@@ -103,6 +120,8 @@ bool device::rsp_device_DIST(AtCommand &at)
         DIST_Y,
         DIST_Z,
         DIST_RADIO,
+        DIST_IDIFF,
+        DIST_MC,
         DIST_LEN
     };
 
@@ -110,7 +129,7 @@ bool device::rsp_device_DIST(AtCommand &at)
         Anchor.time = at.getParam(DIST_TIME).toLong(&bok);
         if(!bok) return false;
 
-        Anchor.ID = at.getParam(DIST_ID).toLong(&bok,16);
+        Anchor.ID = at.getParam(DIST_ID).toULong(&bok,16);
         if(!bok) return false;
 
         dist = at.getParam(DIST_DIST).toInt(&bok);
@@ -125,12 +144,26 @@ bool device::rsp_device_DIST(AtCommand &at)
         Anchor.Z = at.getParam(DIST_Z).toInt(&bok);
         if(!bok) return false;
 
-        radio= at.getParam(DIST_RADIO).toInt(&bok);
+        radio= at.getParam(DIST_IDIFF).toInt(&bok);
         if(!bok) return false;
 
+        float prNLOS=0.0;
 
+        if (radio <= wparams.i1)
+            prNLOS = 0;
+        else if (radio < wparams.i2)
+            prNLOS = (wparams.alpha)*radio + wparams.beta;
+        else if(radio < 1000)
+            prNLOS = wparams.prNlos_valueMax;
+        else
+            prNLOS = 1;
+
+
+        weight = 1- prNLOS;
+        qDebug()<<QString("dist : radio %1 W:%2").arg(radio).arg(weight);
         if(!anchorPos.contains(Anchor.ID)){
             m_listOfID.append(QString::number(Anchor.ID,16));
+            m_listOfID.sort(Qt::CaseInsensitive);
             emit listOfID_changed();
         }
 
@@ -138,11 +171,12 @@ bool device::rsp_device_DIST(AtCommand &at)
         emit DistInComming(Anchor.ID
                            ,dist
                            ,Anchor.X,Anchor.Y,Anchor.Z
-                           ,radio);
+                           ,radio,weight);
         return true;
     }
     return false;
 }
+
 
 bool device::rsp_device_MPOS(AtCommand &at)
 {
@@ -174,10 +208,10 @@ bool device::rsp_device_MPOS(AtCommand &at)
         Z = at.getParam(MPOS_Z).toInt(&bok);
         if(!bok) return false;
 
-        emit PosInComming( X,Y,Z);
+        emit PosInComming( X,Y,Z,time);
 
         setCoord(QPointF(X,Y));
-
+        setTime(time);
         return true;
     }
     return false;
@@ -209,14 +243,19 @@ bool device::rsp_device_POS(AtCommand &at)
     bool bok;
 
     if(at.numParams()>=4){
-        Anchor.ID = at.getParam(0).toLong(&bok,16);
-        if(!bok) return false;
+
+        //  Anchor.ID =static_cast<long>(0x00000000ffffffff & at.getParam(0).toLongLong(&bok,16));
+        Anchor.ID =at.getParam(0).toULong(&bok,16);
+        if(!bok)return false;
+
 
         Anchor.X = at.getParam(1).toInt(&bok);
         if(!bok) return false;
 
+
         Anchor.Y = at.getParam(2).toInt(&bok);
         if(!bok) return false;
+
 
         Anchor.Z = at.getParam(3).toInt(&bok);
         if(!bok) return false;
@@ -224,6 +263,7 @@ bool device::rsp_device_POS(AtCommand &at)
 
         if(!anchorPos.contains(Anchor.ID)){
             m_listOfID.append(QString::number(Anchor.ID,16));
+            m_listOfID.sort(Qt::CaseInsensitive);
             emit listOfID_changed();
         }
         anchorPos.insert(Anchor.ID,Anchor);
@@ -247,22 +287,23 @@ bool device::rsp_device_DPOS(AtCommand &at)
         DPOS_ANCHOR_Z,
         DPOS_ANCHOR_DIST,
         DPOS_ANCHOR_PWR,
+        DPOS_ANCHOR_WEIGHT = DPOS_ANCHOR_PWR,
         nb_DPOS
     };
 
     int X,Y,Z;
     long time;
     bool bok;
-    long UID;
+    ulong UID;
     anchor Anchor;
-    int dist,radio;
+    int dist,radio,weight;
 
     if(at.numParams()>=nb_DPOS){
 
         time= at.getParam(DPOS_TIME).toLong(&bok);
         if(!bok) return false;
 
-        UID= at.getParam(DPOS_UID).toLong(&bok,16);
+        UID= at.getParam(DPOS_UID).toULong(&bok,16);
         if(!bok) return false;
 
 
@@ -280,7 +321,7 @@ bool device::rsp_device_DPOS(AtCommand &at)
 
         Anchor.time = time;
 
-        Anchor.ID = at.getParam(DPOS_ANCHOR_UID).toLong(&bok,16);
+        Anchor.ID = at.getParam(DPOS_ANCHOR_UID).toULong(&bok,16);
         if(!bok) return false;
 
         dist = at.getParam(DPOS_ANCHOR_DIST).toInt(&bok);
@@ -298,6 +339,9 @@ bool device::rsp_device_DPOS(AtCommand &at)
         radio= at.getParam(DPOS_ANCHOR_PWR).toInt(&bok);
         if(!bok) return false;
 
+        weight= at.getParam(DPOS_ANCHOR_WEIGHT).toInt(&bok);
+        if(!bok) return false;
+
 
         if(!anchorPos.contains(Anchor.ID)){
             m_listOfID.append(QString::number(Anchor.ID,16));
@@ -308,10 +352,11 @@ bool device::rsp_device_DPOS(AtCommand &at)
         emit DistInComming(Anchor.ID
                            ,dist
                            ,Anchor.X,Anchor.Y,Anchor.Z
-                           ,radio);
+                           ,radio,weight);
 
-         emit PosInComming( X,Y,Z);
-        setCoord(QPointF(X,Y));
+//        emit PosInComming( X,Y,Z,time);
+//        setCoord(QPointF(X,Y));
+        setTime(time);
 
         return true;
     }
@@ -371,9 +416,15 @@ bool device::rsp_device_CFG(AtCommand &at)
         if(!uwbConfig->forceConfigure()){
             uwbConfig->setOfItems["CHAN"]->setCurrentValue(CHAN);
             uwbConfig->setOfItems["PRF"]->setCurrentValue(PRF);
+            uwbConfig->initTRxCode(CHAN,PRF);
             uwbConfig->setOfItems["TRXcode"]->setCurrentValue(TRCODE);
+
             uwbConfig->setOfItems["BR"]->setCurrentValue(BR);
+            uwbConfig->initPlen(BR);
+
             uwbConfig->setOfItems["PLEN"]->setCurrentValue(PLEN);
+            uwbConfig->initPac(PLEN);
+
             uwbConfig->setOfItems["PAC"]->setCurrentValue(PAC);
         }else{
             send_config();
@@ -429,8 +480,50 @@ bool device::rsp_device_TRACE(AtCommand &at)
     return true;
 }
 
+bool device::rsp_device_WPARAMS(AtCommand &at){
+    enum{
+        WPARAM_PARAM_PRM=0
+        ,WPARAM_PARAM_i1
+        ,WPARAM_PARAM_i2
+        ,WPARAM_PARAM_NB
+    };
+
+    int min,i1,i2;
+    qDebug()<<Q_FUNC_INFO;
+    bool bok;
+    if(at.numParams() < WPARAM_PARAM_NB) return false;
+
+
+    min = at.getParam(WPARAM_PARAM_PRM).toInt(&bok);
+    if(!bok) return false;
+
+    i1 = at.getParam(WPARAM_PARAM_i1).toInt(&bok);
+    if(!bok) return false;
+
+    i2 = at.getParam(WPARAM_PARAM_i2).toInt(&bok);
+    if(!bok) return false;
+
+
+    wparams.i1 = i1;
+    wparams.i2 = i2;
+
+    wparams.prNlos_valueMax = min/100;
+
+    wparams.alpha = (wparams.prNlos_valueMax) /
+                            (wparams.i2 - wparams.i1);
+    wparams.beta = - wparams.alpha * wparams.i1;
+
+
+
+    return true;
+}
+
+
 device::device(const QString &nameObj, QObject *parent) : Qml_object (nameObj,parent)
 {
+
+
+
     configListIdx=0;
     checkDevice.setInterval(5000);
     checkDevice.setSingleShot(false);
@@ -440,12 +533,14 @@ device::device(const QString &nameObj, QObject *parent) : Qml_object (nameObj,pa
     configList.append("AT+ID?\r\n");
     configList.append("AT+POS?\r\n");
     configList.append("AT+CFG?\r\n");
+    configList.append("AT+WPARAMS?\r\n");
     //configList.append("AT+TRACE?\r\n");
 
     indexParseMsg =0;
 
     addRsp("OK",&device::rsp_device_ok);
     addRsp("ERROR",&device::rsp_device_error);
+
 
     addRsp("DIST",&device::rsp_device_DIST);
     addRsp("MPOS",&device::rsp_device_MPOS);
@@ -455,21 +550,22 @@ device::device(const QString &nameObj, QObject *parent) : Qml_object (nameObj,pa
     addRsp("CFG",&device::rsp_device_CFG);
     addRsp("TRACE",&device::rsp_device_TRACE);
     addRsp("DPOS",&device::rsp_device_DPOS);
+    addRsp("WPARAMS",&device::rsp_device_WPARAMS);
 
 }
 
 
-void device::onIncommingData(QByteArray incomingMessage){
+void device::onIncommingData(const QByteArray &incomingMessage){
 
 
     allDataFromDevice += incomingMessage;
 
-    qDebug()<<Q_FUNC_INFO<<" "<<allDataFromDevice<<"("<<incomingMessage<<") idx:"<<indexParseMsg;
+    qWarning()<<Q_FUNC_INFO<<" "<<allDataFromDevice<<"("<<incomingMessage<<") idx:"<<indexParseMsg;
 
     if(configListIdx >= configList.length())
         checkDevice.start();
 
-    if(!(allDataFromDevice.endsWith("\r\n") || allDataFromDevice.endsWith("\n\r") ))
+    if(!(incomingMessage.endsWith("\r\n") || incomingMessage.endsWith("\n\r") ))
         return;
 
 
@@ -498,7 +594,7 @@ void device::onCnxStatusChanged(bool cnx)
         checkDevice.start();
     }
     else {
-        checkDevice.stop();
+        stopSendCmd();
         if(!uwbConfig->forceConfigure())
             uwbConfig->resetValue();
     }

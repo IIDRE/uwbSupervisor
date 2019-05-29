@@ -53,14 +53,25 @@ AnchorsList::AnchorsList():Qml_AbstracList(this)
     addRole("Dist",&AnchorsList::getDist);
     addRole("Descrip",&AnchorsList::getDescrip);
     addRole("Type",&AnchorsList::getType);
+    addRole("Weight",&AnchorsList::getWeight);
 
     isAnchor = true;
 
 }
 
-void AnchorsList::removeAnchor(long UID)
-{
+void AnchorsList::clearAnchorData(unsigned long UID){
+    for(int i=0 ; i< list.length();i++){
+        if(list[i].UID == UID){
+            qDebug()<<Q_FUNC_INFO<<QString("clear: %1").arg(UID,0,16);
+            list[i].dist=0;
+            list[i].radio=0;
+            break;
+        }
+    }
+}
 
+void AnchorsList::removeAnchor(unsigned long UID)
+{
     for(int i=0 ; i< list.length();i++){
         if(list[i].UID == UID){
             qDebug()<<Q_FUNC_INFO<<QString("remove: %1").arg(UID,0,16);
@@ -138,9 +149,9 @@ void AnchorsList::UpdateAnchor(const anchor_data &data)
 
 }
 
-void AnchorsList::UpdateAnchor(long UID, int dist, int X, int Y, int Z, int radio, Anchor_type::TYPE anchorType, QString descrip)
+void AnchorsList::UpdateAnchor(unsigned long UID, int dist, int X, int Y, int Z, int radio,float weight, Anchor_type::TYPE anchorType, QString descrip)
 {
-    UpdateAnchor(anchor_data(UID,dist,X,Y,Z,radio,anchorType,descrip));
+    UpdateAnchor(anchor_data(UID,dist,X,Y,Z,radio,weight,anchorType,descrip));
 }
 
 void AnchorsList::setValue(int idx,long UID, Anchor_type::TYPE anchorType, QString descrip)

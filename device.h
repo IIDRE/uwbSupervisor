@@ -43,23 +43,25 @@ termes.*/
 #include "uwb_config.h"
 
 
-
 struct anchor{
     long time;
     int X,Y,Z;
-    long ID;
+    unsigned long ID;
 };
+
 
 
 class device : public Qml_object
 {
 public:
-    typedef QHash<long,anchor> HASH_OF_ANCHOR;
+    typedef QHash<unsigned long,anchor> HASH_OF_ANCHOR;
     Q_PROPERTY(QPointF coord READ coord WRITE setCoord NOTIFY coordChanged)
     Q_PROPERTY(QStringList listOfID MEMBER m_listOfID NOTIFY listOfID_changed)
+    Q_PROPERTY(int  time READ time WRITE setTime NOTIFY timeChanged)
 
 private:
     Q_OBJECT
+
 
     QTimer checkDevice;
 
@@ -71,6 +73,8 @@ private:
     QStringList m_listOfID;
 
     int configListIdx;
+    bool configPosInProgress = false;
+    int nbConfigPos=0;
     QList<QByteArray> configList;
 
     QString configDeviceCommand;
@@ -86,12 +90,18 @@ private:
         allDataFromDevice.clear();
     }
 
-
+    void stopSendCmd(){
+        checkDevice.stop();
+        nbConfigPos = 0;
+        emit busy(false);
+        configPosInProgress=false;
+    }
 
     bool rsp_device_ok(AtCommand &at);
     bool rsp_device_error(AtCommand &at);
 
     bool rsp_device_DIST(AtCommand &at);
+
     bool rsp_device_MPOS(AtCommand &at);
     bool rsp_device_ID(AtCommand &at);
     bool rsp_device_VER(AtCommand &at);
@@ -99,6 +109,7 @@ private:
     bool rsp_device_DPOS(AtCommand &at);
     bool rsp_device_CFG(AtCommand &at);
     bool rsp_device_TRACE(AtCommand &at);
+    bool rsp_device_WPARAMS(AtCommand &at);
 
     template<typename F>
     void addRsp(const QString str,F cb){
@@ -109,27 +120,46 @@ private:
         if(configListIdx < configList.length()){
             emit sendCommand(configList[configListIdx]);
             checkDevice.start();
-        }else checkDevice.stop();
+        }else stopSendCmd();
     }
 
     void sendNextConfig(){
         if(configListIdx < configList.length()-1){
+            emit busy(true);
             configListIdx++;
             emit sendCommand(configList[configListIdx]);
             checkDevice.start();
-        }else checkDevice.stop();
+        }else{
+            if(configPosInProgress) {
+                qCritical()<<QString("export positions : %1").arg(nbConfigPos);
+            }
+            stopSendCmd();
+        }
     }
+
     QPointF m_coord;
+
+
+    int m_time;
+
+    struct WPARAMS{
+        float alpha;
+        float beta;
+        float prNlos_valueMax;
+        float i1;
+        float i2;
+    } wparams;
+
 
 
 public:
     explicit device(const QString &nameObQPointfj ,QObject *parent = nullptr);
 
-    QHash<long, anchor> getAnchorPos() const;
+    QHash<unsigned long, anchor> getAnchorPos() const;
     Q_INVOKABLE void setPosAnchor(QString UID,int X,int Y,int Z);
     Q_INVOKABLE void configDevice();
 
-    void setPosAnchor(long UID,int X,int Y,int Z);
+    void setPosAnchor(unsigned long UID, int X, int Y, int Z);
     void setPosAnchor(anchor &pos);
 
     QPointF coord() const
@@ -137,17 +167,23 @@ public:
         return m_coord;
     }
 
+
+
 signals:
     void sendCommand(QByteArray cmd);
     //+DIST:10000B7A,285,40,-493,0,-83282
-    void DistInComming(long UID,int dist,int X,int Y,int Z,int radio);
-    void PosInComming(int X,int Y,int Z);
+    void DistInComming(unsigned long UID,int dist,int X,int Y,int Z,int radio,float weight);
+    void PosInComming(int X,int Y,int Z,long time);
     void coordChanged(QPointF coord);
-    void PosDeviceFromAnchor(long UID,int X,int Y,int Z);
+    void PosDeviceFromAnchor(unsigned long UID,int X,int Y,int Z);
     void listOfID_changed();
+    void busy(bool status);
+    void timeChanged(int time);
+
+
 
 public slots:
-    void onIncommingData(QByteArray incomingMessage);
+    void onIncommingData(const QByteArray &incomingMessage);
     void onCnxStatusChanged(bool cnx);
     void onSendConfigCmd();
     void setCoord(QPointF coord)
@@ -161,6 +197,16 @@ public slots:
 
     // Qml_object interface
 
+    void setTime(int time)
+    {
+        if (m_time == time)
+            return;
+
+        m_time = time;
+        emit timeChanged(m_time);
+    }
+
+
 public:
     uwb_config *uwbConfig;
 
@@ -172,6 +218,11 @@ public:
 
     }
     void send_config();
+    int time() const
+    {
+        return m_time;
+    }
+
 };
 
 #endif // DEVICE_H

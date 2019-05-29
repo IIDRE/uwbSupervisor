@@ -61,13 +61,14 @@ void file_manager::setLastFile(QString lastFile)
     emit lastFileChanged(m_lastFile);
 }
 
-void file_manager::onDistInComming(long UID, int dist, int X, int Y, int Z, int radio)
+void file_manager::onDistInComming(unsigned long UID, int dist, int X, int Y, int Z, int radio)
 {
     logMatFile.addAnchor(UID,dist,X,Y,Z,radio);
 }
 
-void file_manager::onPosInComming(int X, int Y, int Z)
+void file_manager::onPosInComming(int X, int Y, int Z,long time)
 {
+    Q_UNUSED(time)
     logMatFile.write(X,Y,Z);
 }
 
@@ -85,6 +86,8 @@ QJsonArray file_manager::toJson(const device::HASH_OF_ANCHOR &h)
     QJsonArray Ja;
     for(auto i:h){
         QJsonObject jo;
+
+        qDebug()<<Q_FUNC_INFO<<i.ID<<QString::number(i.ID,16)<<QString("%1").arg(i.ID,8,16);
         jo[JSON_ID] = QString::number(i.ID,16);
         jo[JSON_POS_X] = static_cast<int>(i.X);
         jo[JSON_POS_Y] = static_cast<int>(i.Y);
@@ -124,7 +127,9 @@ void file_manager::importDataFromFlash(QUrl file)
 
     setLastURLS(file);
     QJsonObject jo;
-    jo[JSON_ANCHOR]=toJson(Device.getAnchorPos());
+    const auto &anchor = Device.getAnchorPos();
+    qCritical()<<QString("import %1 anchors").arg(anchor.size());
+    jo[JSON_ANCHOR]=toJson(anchor);
     if(saveJson(file,jo)) setLastURLS(file);
 }
 
@@ -143,12 +148,12 @@ bool file_manager::readJson (QUrl file,QJsonDocument &jsdoc){
 
     if(jsdoc.isEmpty())
     {
-        qWarning()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID : file is empty";
+        qCritical()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID : file is empty";
         return false;
     }
 
     if(!jsdoc.isObject()){
-        qWarning()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID : file is not json object";
+        qCritical()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID : file is not json object";
         return false;
     }
 
@@ -160,6 +165,7 @@ bool file_manager::openMapJSON(QUrl file)
     qDebug()<<Q_FUNC_INFO<<" open json";
 
     QHash<Anchor_type::TYPE,QString> type;
+
     type.insert(Anchor_type::ANCHOR,JSON_ANCHOR);
     type.insert(Anchor_type::POI,JSON_MAP);
 
@@ -170,12 +176,16 @@ bool file_manager::openMapJSON(QUrl file)
     QList<Anchor_type::TYPE> lType = type.keys();
 
     Anchors.getAnchorFromFile().clear();
+    QString resumImport = "Importation :";
+    int iImport = 0;
     for(auto t : lType){
         const QString &strType = type[t];
+
         QJsonArray jAnchor = jsdoc.object()[strType].toArray();
         if(jAnchor.isEmpty())
         {
             qWarning()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID : no found "<<strType<<" array";
+            resumImport += QString("%1 0 ").arg(strType);
             continue;
         }
 
@@ -183,7 +193,7 @@ bool file_manager::openMapJSON(QUrl file)
         for(auto a : jAnchor){
             anchor d;
             if(!a.isObject()){
-                qWarning()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID "<<__LINE__;
+                qCritical()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID "<<__LINE__;
                 continue ;
             }
             auto o = a.toObject();
@@ -192,7 +202,7 @@ bool file_manager::openMapJSON(QUrl file)
             bool bOK;
 
 
-            d.ID = strID.simplified().toLongLong(&bOK,16);
+            d.ID = strID.simplified().toULong(&bOK,16);
 
             if(!bOK) continue;
 
@@ -201,9 +211,13 @@ bool file_manager::openMapJSON(QUrl file)
             d.Z = o[JSON_POS_Z].toInt();
 
             Anchors.getAnchorFromFile().UpdateAnchor(d.ID,0,d.X,d.Y,d.Z,0,t);
-
+           iImport++;
         }
+          resumImport += QString("%1 %2 ").arg(strType).arg(iImport);
     }
+
+    qCritical()<<resumImport;
+
     return true;
 }
 
@@ -231,7 +245,7 @@ void file_manager::exportDataToFlash(QUrl file){
     QJsonArray jAnchor = jsdoc.object()[JSON_ANCHOR].toArray();
     if(jAnchor.isEmpty())
     {
-        qWarning()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID : no found ANCHOR array";
+        qCritical()<<"THE LOADED CONFIGURATION DOCUMENT IS NOT VALID : no found ANCHOR array";
         return;
     }
 
@@ -247,7 +261,7 @@ void file_manager::exportDataToFlash(QUrl file){
         auto strID =o[JSON_ID].toString();
         bool bOK;
 
-        d.ID = strID.toLong(&bOK,16);
+        d.ID = strID.toULong(&bOK,16);
 
         if(!bOK) continue;
 
@@ -255,7 +269,7 @@ void file_manager::exportDataToFlash(QUrl file){
         d.Y = o[JSON_POS_Y].toInt();
         d.Z = o[JSON_POS_Z].toInt();
 
-
+        qDebug()<<Q_FUNC_INFO<<"set pos ancho"<<d.ID;
         Device.setPosAnchor(d);
 
     }
@@ -318,6 +332,7 @@ file_manager::dxf_reader::dxf_reader(QUrl urlfile, file_manager *parent, Anchors
 {
     anchors.clear();
     uid = 1;
+    nbImport=0;
     // Load DXF file into memory:
     char *file = urlfile.toLocalFile().toLocal8Bit().data();
 
@@ -329,12 +344,14 @@ file_manager::dxf_reader::dxf_reader(QUrl urlfile, file_manager *parent, Anchors
     else{
         parent->setLastURLS(urlfile);
     }
+    qCritical()<<QString("importation %1 point").arg(nbImport);
 }
 
 void file_manager::dxf_reader::addPoint(const DL_PointData &data)
 {
     qDebug()<<Q_FUNC_INFO<<QString("X: %1 y: %2 z: %3").arg(data.x).arg(data.y).arg(data.z);
     anchors.UpdateAnchor(uid++,0,toCm(data.x),toCm(data.y),toCm(data.z),0,Anchor_type::POI);
+    nbImport++;
 }
 
 

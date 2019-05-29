@@ -49,8 +49,9 @@ ColumnLayout {
             model: model_uwb_CHAN
             currentIndex: model_uwb_obj_CHAN.idx
             onActivated: {
-                controler_uwb_config.valueChange(name,index);
                 model_uwb_obj_CHAN.idx=index
+                controler_uwb_config.valueChange(name,index);
+
             }
             Layout.minimumWidth:   parent_width/3
         }
@@ -60,8 +61,8 @@ ColumnLayout {
             model:model_uwb_PRF
             currentIndex: model_uwb_obj_PRF.idx
             onActivated: {
-                controler_uwb_config.valueChange(name,index);
                 model_uwb_obj_PRF.idx=index
+                controler_uwb_config.valueChange(name,index);
             }
             Layout.preferredWidth:   parent_width/3
         }
@@ -71,8 +72,8 @@ ColumnLayout {
             model:model_uwb_TRXcode
             currentIndex: model_uwb_obj_TRXcode.idx
             onActivated: {
-                controler_uwb_config.valueChange(name,index);
                 model_uwb_obj_TRXcode.idx=index
+                controler_uwb_config.valueChange(name,index);
             }
             Layout.preferredWidth:   parent_width/3
         }
@@ -82,8 +83,8 @@ ColumnLayout {
             model:model_uwb_BR
             currentIndex: model_uwb_obj_BR.idx
             onActivated: {
-                controler_uwb_config.valueChange(name,index);
                 model_uwb_obj_BR.idx=index
+                controler_uwb_config.valueChange(name,index);
             }
             Layout.preferredWidth:   parent_width/3
         }
@@ -93,8 +94,8 @@ ColumnLayout {
             model:model_uwb_PLEN
             currentIndex: model_uwb_obj_PLEN.idx
             onActivated: {
-                controler_uwb_config.valueChange(name,index);
                 model_uwb_obj_PLEN.idx=index
+                controler_uwb_config.valueChange(name,index);
             }
             Layout.preferredWidth:   parent_width/3
         }
@@ -104,8 +105,8 @@ ColumnLayout {
             model:model_uwb_PAC
             currentIndex: model_uwb_obj_PAC.idx
             onActivated: {
-                controler_uwb_config.valueChange(name,index);
                 model_uwb_obj_PAC.idx=index
+                controler_uwb_config.valueChange(name,index);
             }
             Layout.preferredWidth:   parent_width/3
         }

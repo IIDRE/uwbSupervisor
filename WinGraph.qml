@@ -42,6 +42,8 @@ Window {
         contentHeight: graphs.itemHeight*graphs.count +20
         contentWidth: root.width
         Column{
+
+
             Repeater{
                 id:graphs
                 property real itemHeight: 300
@@ -52,10 +54,12 @@ Window {
                     width: root.width
                     border.color: "black"
                     GraphDist{
+
                         title: model.UID
                         dist:model.Dist
                         radio:model.Radio
                     }
+
                 }
             }
         }

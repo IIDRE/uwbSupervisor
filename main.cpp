@@ -42,7 +42,12 @@ termes.*/
 #include "file_manager.h"
 #include "anchorscollections.h"
 
+#include "message_system.h"
+#include "setting.h"
 #include "test.h"
+
+
+
 
 int main(int argc, char *argv[])
 {
@@ -61,6 +66,9 @@ int main(int argc, char *argv[])
 
     Qml_objectClollection qmlCollection(engine.rootContext());
 
+
+    qmlCollection.add(message_system::getInstance());
+    qmlCollection.add(Setting::getInstance());
 
     auto Device = qmlCollection.add(new device("device"));
 

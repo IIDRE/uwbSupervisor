@@ -63,6 +63,7 @@ ColumnLayout {
                     console.log("combo onCurrentIndexChanged changed" +currentIndex+" "+count)
                     if(currentIndex < 0 ) currentIndex = lastCurIndex;
                 }
+
                 enabled:!deviceConnected
             }
 
@@ -74,7 +75,7 @@ ColumnLayout {
             Label{color: "black" ; text: "baudrate"}
             ComboBox{
                 id:select_baudrate
-                currentIndex:  controler_serial_device.getIdxBaudrate(115200)
+                currentIndex:  controler_serial_device.getIdxBaudrate(460800)
                 model: model_baudrate
                 width: parent.width
                 enabled:! deviceConnected

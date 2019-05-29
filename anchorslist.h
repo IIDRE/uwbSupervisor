@@ -49,19 +49,21 @@ public:
 };
 
 struct anchor_data{
-    long UID;
+    unsigned long UID;
     int X,Y,Z;
     int radio;
+    float weight;
     int dist;
     Anchor_type::TYPE anchorType;
     QString descrip;
 
 
-    anchor_data(long UID=0, int dist=0, int X=0, int Y=0, int Z=0, int radio=0
+    anchor_data(unsigned long UID=0, int dist=0, int X=0, int Y=0, int Z=0, int radio=0,float weight =0
             ,Anchor_type::TYPE anchorType = Anchor_type::ANCHOR,QString descrip=QString()):
         UID(UID)
       ,X(X),Y(Y),Z(Z)
       ,radio(radio)
+      ,weight(weight)
       ,dist(dist)
       ,anchorType(anchorType)
       ,descrip(descrip)
@@ -78,6 +80,7 @@ struct anchor_data{
             Y = A.Y;
             Z = A.Z;
             radio = A.radio;
+            weight = A.weight;
             dist = A.dist;
             descrip = A.descrip;
             anchorType = A.anchorType;
@@ -110,6 +113,10 @@ CLASS_QML_ABSTRACT_LIST(AnchorsList,anchor_data){
         return data.radio;
     }
 
+    QVariant getWeight(const anchor_data data)const{
+        return data.weight;
+    }
+
     QVariant getDist(const anchor_data data)const{
         return data.dist;
     }
@@ -128,10 +135,11 @@ public:
     AnchorsList();
 
     ~AnchorsList(){}
-    void removeAnchor(long UID);
+    void removeAnchor(unsigned long UID);
+    void clearAnchorData(unsigned long UID);
     void UpdateAnchor(const anchor_data &data);
-    void UpdateAnchor(long UID,int dist,int X,int Y,int Z,int radio
-                        ,Anchor_type::TYPE anchorType = Anchor_type::ANCHOR,QString descrip=QString());
+    void UpdateAnchor(unsigned long UID, int dist, int X, int Y, int Z, int radio
+                        , float weight, Anchor_type::TYPE anchorType = Anchor_type::ANCHOR, QString descrip=QString());
 
     void setValue(int idx,long UID,Anchor_type::TYPE anchorType = Anchor_type::ANCHOR,QString descrip=QString() );
 
