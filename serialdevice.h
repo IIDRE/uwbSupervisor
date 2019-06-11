@@ -158,13 +158,16 @@ private slots:
 class serialDevice:public Qml_object
 {
     Q_OBJECT
+
+    Q_PROPERTY(bool cnxStatus READ cnxStatus WRITE setCnxStatus NOTIFY cnxStatusChanged)
+    Q_PROPERTY(QString cnxInfo READ cnxInfo WRITE setCnxInfo NOTIFY cnxInfoChanged)
+
     QSerialPort serialPort;
     baudrateList BaudrateList;
     PortAvaibleList portAvaibleList;
     QFile file;
     QTextStream *data;
-    Q_PROPERTY(bool cnxStatus READ cnxStatus WRITE setCnxStatus NOTIFY cnxStatusChanged)
-    Q_PROPERTY(QString cnxInfo READ cnxInfo WRITE setCnxInfo NOTIFY cnxInfoChanged)
+
     bool m_cnxStatus;
 
     QString m_cnxInfo;
