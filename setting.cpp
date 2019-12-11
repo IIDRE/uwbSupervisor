@@ -13,6 +13,20 @@ Setting::Setting(const QString fileName , const QString qmlName)
     setDuoPoint(get("filter_duo",m_duoPoint).toBool());
     setFilterValue(get("filter_value",m_filterValue).toInt());
     setFileSimulation(get("simulation_file",m_fileSimulation).toString());
+
+    DistHeader = get("dist_header","DIST").toString();
+    PosHeader = get("pos_header","MPOS").toString();
+
+}
+
+QString Setting::getPosHeader() const
+{
+    return PosHeader;
+}
+
+QString Setting::getDistHeader() const
+{
+    return DistHeader;
 }
 
 QVariant Setting::get(const QString &_key, QVariant def)

@@ -33,5 +33,6 @@
         <file>images/icon_flip_50.png</file>
         <file>images/icon_flip2_50.png</file>
         <file>images/icon_rotation2_50.png</file>
+        <file>GraphHistDist.qml</file>
     </qresource>
 </RCC>

@@ -34,6 +34,10 @@ public:
         return m_fileSimulation;
     }
 
+    QString getDistHeader() const;
+
+    QString getPosHeader() const;
+
 public slots:
     void setDuoPoint(bool duoPoint)
     {
@@ -74,6 +78,10 @@ private:
 
     bool m_duoPoint;
     int m_filterValue;
+
+
+    QString DistHeader;
+    QString PosHeader;
 
     static Setting * instance;
 

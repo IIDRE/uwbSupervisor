@@ -70,28 +70,28 @@ int main(int argc, char *argv[])
     qmlCollection.add(message_system::getInstance());
     qmlCollection.add(Setting::getInstance());
 
-    //ajout image provider
+    auto Device = qmlCollection.add(new device("device"));
+
+    auto s =  qmlCollection.add(new serialDevice("serial_device"));
+    QObject::connect(s,&serialDevice::incomingData,Device,&device::onIncommingData);
+    QObject::connect(Device,&device::sendCommand,s,&serialDevice::sendToSerial);
+    QObject::connect(s,&serialDevice::cnxStatusChanged,Device,&device::onCnxStatusChanged);
+
+    auto Ac = qmlCollection.add(new AnchorsCollections("anchor_collection"));
+    QObject::connect(Device,&device::DistInComming,Ac,&AnchorsCollections::onDistInComming);
+    QObject::connect(Device,&device::PosDeviceFromAnchor,Ac,&AnchorsCollections::onPosDeviceFromAnchorInComming);
+
+
+//ajout image provider
     img_provider ImgMap;
     engine.addImageProvider("ImgMap",&ImgMap);
 
-    auto Device = qmlCollection.add(new device("device"));
-    auto serial_device =  qmlCollection.add(new serialDevice("serial_device"));
-    auto anchor_collection = qmlCollection.add(new AnchorsCollections("anchor_collection"));
-    auto FileManager = qmlCollection.add(new file_manager("file_manager",*Device,*anchor_collection,ImgMap));
 
 
-    QObject::connect(serial_device,&serialDevice::incomingData,Device,&device::onIncommingData);
-    QObject::connect(Device,&device::sendCommand,serial_device,&serialDevice::sendToSerial);
-    QObject::connect(serial_device,&serialDevice::cnxStatusChanged,Device,&device::onCnxStatusChanged);
-
-
-    QObject::connect(Device,&device::DistInComming,anchor_collection,&AnchorsCollections::onDistInComming);
-    QObject::connect(Device,&device::PosDeviceFromAnchor,anchor_collection,&AnchorsCollections::onPosDeviceFromAnchorInComming);
-
-
-    QObject::connect(serial_device,&serialDevice::cnxStatusChanged,FileManager,&file_manager::onCnxStatusChanged);
-    QObject::connect(Device,&device::DistInComming,FileManager,&file_manager::onDistInComming);
-    QObject::connect(Device,&device::PosInComming,FileManager,&file_manager::onPosInComming);
+    auto f = qmlCollection.add(new file_manager("file_manager",*Device,*Ac,ImgMap));
+    QObject::connect(s,&serialDevice::cnxStatusChanged,f,&file_manager::onCnxStatusChanged);
+    QObject::connect(Device,&device::DistInComming,f,&file_manager::onDistInComming);
+    QObject::connect(Device,&device::PosInComming,f,&file_manager::onPosInComming);
 
 
 

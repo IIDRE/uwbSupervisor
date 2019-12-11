@@ -58,7 +58,7 @@ public:
     Q_PROPERTY(QPointF coord READ coord WRITE setCoord NOTIFY coordChanged)
     Q_PROPERTY(QStringList listOfID MEMBER m_listOfID NOTIFY listOfID_changed)
     Q_PROPERTY(int  time READ time WRITE setTime NOTIFY timeChanged)
-
+    Q_PROPERTY(QString device_ID READ device_ID WRITE setDevice_ID NOTIFY device_IDChanged)
 private:
     Q_OBJECT
 
@@ -80,7 +80,7 @@ private:
     QString configDeviceCommand;
 
     QString version;
-    long deviceID;
+
 
 
     int indexParseMsg;
@@ -152,6 +152,8 @@ private:
 
 
 
+    QString m_device_ID;
+
 public:
     explicit device(const QString &nameObQPointfj ,QObject *parent = nullptr);
 
@@ -182,6 +184,8 @@ signals:
 
 
 
+    void device_IDChanged(QString device_ID);
+
 public slots:
     void onIncommingData(const QByteArray &incomingMessage);
     void onCnxStatusChanged(bool cnx);
@@ -207,6 +211,15 @@ public slots:
     }
 
 
+    void setDevice_ID(QString device_ID)
+    {
+        if (m_device_ID == device_ID)
+            return;
+
+        m_device_ID = device_ID;
+        emit device_IDChanged(m_device_ID);
+    }
+
 public:
     uwb_config *uwbConfig;
 
@@ -223,6 +236,11 @@ public:
         return m_time;
     }
 
+    QString device_ID() const
+    {
+        qDebug()<<Q_FUNC_INFO<<m_device_ID;
+        return m_device_ID;
+    }
 };
 
 #endif // DEVICE_H

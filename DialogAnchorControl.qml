@@ -37,7 +37,7 @@ Popup{
     id:root
 
     property int idx : 0
-    property int type: AnchorType.ANCHOR
+    property int type: AnchorType.UNKNOW
     property int type_selected: AnchorType.ANCHOR
     property string uid: ""
     property string description: ""
@@ -64,7 +64,7 @@ Popup{
         }else{
             root.x= coord.x
         }
-
+        console.log("open dialoAnchor "+type_selected)
 
         visible=true
     }
@@ -158,9 +158,19 @@ Popup{
                 RadioButton {
                     id:button_anchor
                     text: qsTr("Anchor")
-                    checked: true
-                    onVisibleChanged:  checked = type == AnchorType.ANCHOR
-                    onCheckedChanged: type_selected=AnchorType.ANCHOR
+                    onVisibleChanged:  {
+
+                        if(type == AnchorType.UNKNOW){
+                            if(type_selected == AnchorType.ANCHOR ) checked = true;
+                            else checked = false;
+                        }else if(type == AnchorType.ANCHOR ) checked = true;
+                        else checked = false;
+
+                    }
+                    onCheckedChanged: {
+                        if(checked)
+                            type_selected=AnchorType.ANCHOR
+                    }
                 }
                 TextField {
                     id:text_descrip
@@ -169,9 +179,17 @@ Popup{
                 }
                 RadioButton {
                     text: qsTr("Map")
-                    checked: false
-                    onVisibleChanged:  checked = type == AnchorType.POI
-                    onCheckedChanged: type_selected=AnchorType.POI
+                    onVisibleChanged:  {
+                        if(type == AnchorType.UNKNOW){
+                            if(type_selected == AnchorType.POI ) checked = true;
+                            else checked = false;
+                        }else if(type == AnchorType.POI ) checked = true;
+                        else checked = false;
+                    }
+                    onCheckedChanged: {
+                        if(checked)
+                            type_selected=AnchorType.POI
+                    }
                 }
                 Rectangle{
                     Layout.columnSpan: 2

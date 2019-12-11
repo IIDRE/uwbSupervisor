@@ -29,6 +29,8 @@ Le fait que vous puissiez accéder à cet en-tête signifie que vous avez
 pris connaissance de la licence CeCILL, et que vous en avez accepté les
 termes.*/
 import QtQuick 2.0
+import QtQuick.Controls 2.4
+
 
 Rectangle {
     id:root
@@ -37,6 +39,7 @@ Rectangle {
     property real size : 5
     property string info: ""
     property real gain : 0.1
+    property string id_mobile : "xxxxx"
 
     Item{
         id:lowPassFilter_Y
@@ -81,5 +84,28 @@ Rectangle {
         root.y=p.y
     }
 
+    ToolTip{
+        id: infoTxt
+        visible: false
+        //x: root.x
+        //y: root.y
+        text: "id : " + id_mobile
+    }
 
+    Rectangle{
+        id:info
+        anchors.centerIn: parent
+        width: 150
+        height:10
+        color: "transparent"
+       MouseArea{
+            id : zoneMouse
+
+            hoverEnabled: true
+            anchors.fill: parent
+            onContainsMouseChanged: infoTxt.visible = !infoTxt.visible
+            onClicked: root.clicked(id_mobile)
+
+        }
+    }
 }

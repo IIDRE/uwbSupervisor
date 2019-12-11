@@ -272,6 +272,7 @@ RowLayout{
                             scale : 1/root.zoom
                             showInfo: mapControls.infoSet
                             dist_weight: model.Weight
+                            size:10
                         }
                     }
 
@@ -318,17 +319,19 @@ RowLayout{
                         time: controler_device.time
                         color: "transparent"
                         border.color: "red"
+                        id_mobile : controler_device.device_ID
                         border.width: 2
                         scale : 1/root.zoom
                         gain:controler_settings.filterValue*100
+//                        size:0
                     }
-
 
                     Mobile{
                         pos: Qt.point(controler_device.coord.x,controler_device.coord.y)
                         time: controler_device.time
                         color: "transparent"
                         border.color: "blue"
+                        id_mobile : controler_device.device_ID
                         border.width: 2
                         scale : 1/root.zoom
                         visible: controler_settings.duoPoint
@@ -343,10 +346,12 @@ RowLayout{
                             pos: Qt.point(model.X,model.Y)
                             time: controler_device.time
                             color: "transparent"
-                            border.color: "green"
+                            border.color: "red"
                             border.width: 2
+                            id_mobile : model.UID
                             scale : 1/root.zoom
                             gain:controler_settings.filterValue*100
+                            size:10
                         }
 
                     }

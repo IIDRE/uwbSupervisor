@@ -30,6 +30,7 @@ pris connaissance de la licence CeCILL, et que vous en avez accepté les
 termes.*/
 import QtQuick 2.11
 import QtQuick.Controls 2.4
+import QtGraphicalEffects 1.12
 
 Rectangle {
     id:root
@@ -54,10 +55,10 @@ Rectangle {
     height: width
     x:(pos.x-(width/2))
     y:(pos.y-(height/2))
-    opacity: 0.9*root.dist_weight + 0.1;
+    // opacity: 0.9*root.dist_weight + 0.1;
 
-//    x:pos.x
-//    y:pos.y
+    //    x:pos.x
+    //    y:pos.y
 
     onRadioChanged: {
         console.log("radio :"+id_anchor+" "+radio)
@@ -83,32 +84,46 @@ Rectangle {
     }
 
 
-    Rectangle{
-        border.color: "brown"
-
-        //poids visu par contours
-        color: "#00000000"    // ARGB fully transparent
-       // opacity: 0.8*root.dist_weight + 0.2;
-        border.width: -9*root.dist_weight+10
-
-
-        radius: width/2
+    Canvas{
+        id:multilateCircles
         anchors.centerIn: parent
-        width: parent.dist*2
-        height: parent.dist*2
+        width: parent.dist*2+40
+        height: parent.dist*2+40
+        opacity: (1-root.dist_weight)*0.05
+        onPaint: {
+            var ctx = getContext("2d");
+//            ctx.reset();
 
+            blur.visible = true
 
+            var centreX = multilateCircles.width/2;
+            var centreY = multilateCircles.height/2;
+
+            ctx.beginPath();
+            ctx.strokeStyle = "#f75779";
+            ctx.lineWidth = 3
+            ctx.arc(centreX, centreY, (multilateCircles.width-40)/2, 0, Math.PI*2, true);
+
+            ctx.stroke();
+        }
     }
 
+    FastBlur {
+        id:blur
+        visible: false
+        anchors.fill: multilateCircles?multilateCircles:0
+        source: multilateCircles?multilateCircles:0
+        radius: (1-root.dist_weight)*30
+    }
 
     Label {
-   //     rotation: 360-mapControls.rotationAction
+        //     rotation: 360-mapControls.rotationAction
 
         function getR_z(){
             var o = 360
             if(!mapControls.mirror){
-                if(mapControls.rotationAction == 90 || mapControls.rotationAction == 270 ){
-                     o = 180
+                if(mapControls.rotationAction === 90 || mapControls.rotationAction === 270 ){
+                    o = 180
                 }
             }
             console.log("gerRZ " + o + " " + mapControls.rotationAction)
@@ -141,7 +156,7 @@ Rectangle {
                     anchors.right = undefined
                     anchors.left = root.left
                     if(zoneMouse.containsMouse)
-                           anchors.leftMargin = 20
+                        anchors.leftMargin = 20
 
 
                 }else{
@@ -167,7 +182,7 @@ Rectangle {
         width: 150
         height:10
         color: "transparent"
-       MouseArea{
+        MouseArea{
             id : zoneMouse
 
             hoverEnabled: true

@@ -53,8 +53,7 @@ Window {
                     height: graphs.itemHeight
                     width: root.width
                     border.color: "black"
-                    GraphDist{
-
+                    GraphHistDist{
                         title: model.UID
                         dist:model.Dist
                         radio:model.Radio

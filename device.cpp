@@ -29,7 +29,7 @@ Le fait que vous puissiez accéder à cet en-tête signifie que vous avez
 pris connaissance de la licence CeCILL, et que vous en avez accepté les
 termes.*/
 #include "device.h"
-
+#include "setting.h"
 
 
 QHash<unsigned long, anchor> device::getAnchorPos() const
@@ -221,11 +221,10 @@ bool device::rsp_device_ID(AtCommand &at)
 {
     if(at.numParams() < 1) return false;
 
-    bool bok;
-    deviceID = at.getParam(0).toLong(&bok,16);
+    QString id = at.getParam(0);
+    setDevice_ID(id);
 
-
-    qDebug()<<Q_FUNC_INFO<<"device id "<<deviceID;
+    qDebug()<<Q_FUNC_INFO<<"device id "<<id;
     return true;
 }
 
@@ -286,8 +285,8 @@ bool device::rsp_device_DPOS(AtCommand &at)
         DPOS_ANCHOR_Y,
         DPOS_ANCHOR_Z,
         DPOS_ANCHOR_DIST,
-        DPOS_ANCHOR_PWR,
-        DPOS_ANCHOR_WEIGHT = DPOS_ANCHOR_PWR,
+        DPOS_ANCHOR_FPWR,
+        DPOS_ANCHOR_RXpwr,
         nb_DPOS
     };
 
@@ -298,6 +297,7 @@ bool device::rsp_device_DPOS(AtCommand &at)
     anchor Anchor;
     int dist,radio,weight;
 
+    static int test=-20;
     if(at.numParams()>=nb_DPOS){
 
         time= at.getParam(DPOS_TIME).toLong(&bok);
@@ -309,6 +309,7 @@ bool device::rsp_device_DPOS(AtCommand &at)
 
         X = at.getParam(DPOS_X).toInt(&bok);
         if(!bok) return false;
+
 
         Y = at.getParam(DPOS_Y).toInt(&bok);
         if(!bok) return false;
@@ -336,10 +337,10 @@ bool device::rsp_device_DPOS(AtCommand &at)
         Anchor.Z = at.getParam(DPOS_ANCHOR_Z).toInt(&bok);
         if(!bok) return false;
 
-        radio= at.getParam(DPOS_ANCHOR_PWR).toInt(&bok);
+        radio= at.getParam(DPOS_ANCHOR_RXpwr).toInt(&bok);
         if(!bok) return false;
 
-        weight= at.getParam(DPOS_ANCHOR_WEIGHT).toInt(&bok);
+        weight= at.getParam(DPOS_ANCHOR_FPWR).toInt(&bok);
         if(!bok) return false;
 
 
@@ -352,7 +353,7 @@ bool device::rsp_device_DPOS(AtCommand &at)
         emit DistInComming(Anchor.ID
                            ,dist
                            ,Anchor.X,Anchor.Y,Anchor.Z
-                           ,radio,weight);
+                           ,radio,weight/1000);
 
 //        emit PosInComming( X,Y,Z,time);
 //        setCoord(QPointF(X,Y));
@@ -507,7 +508,7 @@ bool device::rsp_device_WPARAMS(AtCommand &at){
     wparams.i1 = i1;
     wparams.i2 = i2;
 
-    wparams.prNlos_valueMax = min/100;
+    wparams.prNlos_valueMax = 1-min/100.0;
 
     wparams.alpha = (wparams.prNlos_valueMax) /
                             (wparams.i2 - wparams.i1);
@@ -542,9 +543,11 @@ device::device(const QString &nameObj, QObject *parent) : Qml_object (nameObj,pa
     addRsp("ERROR",&device::rsp_device_error);
 
 
-    addRsp("DIST",&device::rsp_device_DIST);
-    addRsp("MPOS",&device::rsp_device_MPOS);
-    addRsp("ID",&device::rsp_device_ID);
+    addRsp(Setting::getInstance()->getDistHeader(),&device::rsp_device_DIST);
+   // addRsp(Setting::getInstance()->getPosHeader(),&device::rsp_device_MPOS);
+     addRsp("MPOS",&device::rsp_device_MPOS);
+   // addRsp("MPOS_WLS",&device::rsp_device_MPOS);
+     addRsp("ID",&device::rsp_device_ID);
     addRsp("VER",&device::rsp_device_VER);
     addRsp("POS",&device::rsp_device_POS);
     addRsp("CFG",&device::rsp_device_CFG);

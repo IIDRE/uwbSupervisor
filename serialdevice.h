@@ -158,19 +158,19 @@ private slots:
 class serialDevice:public Qml_object
 {
     Q_OBJECT
-
-    Q_PROPERTY(bool cnxStatus READ cnxStatus WRITE setCnxStatus NOTIFY cnxStatusChanged)
-    Q_PROPERTY(QString cnxInfo READ cnxInfo WRITE setCnxInfo NOTIFY cnxInfoChanged)
-
     QSerialPort serialPort;
     baudrateList BaudrateList;
     PortAvaibleList portAvaibleList;
     QFile file;
     QTextStream *data;
-
+    Q_PROPERTY(bool cnxStatus READ cnxStatus WRITE setCnxStatus NOTIFY cnxStatusChanged)
+    Q_PROPERTY(QString cnxInfo READ cnxInfo WRITE setCnxInfo NOTIFY cnxInfoChanged)
     bool m_cnxStatus;
 
     QString m_cnxInfo;
+
+    QTimer *timerSimulation=nullptr;
+    QFile *fileSimulation=nullptr;
 
 
 public:
@@ -179,6 +179,10 @@ public:
         if(! serialPort.isOpen()) return;
         serialPort.close();
         setCnxStatus(false);
+        delete timerSimulation;
+        delete fileSimulation;
+        timerSimulation = nullptr;
+        fileSimulation = nullptr;
     }
     Q_INVOKABLE int getIdxBaudrate(qint32 baud){
         int idx = BaudrateList.getIdx(baud);
@@ -213,6 +217,22 @@ private slots:
         m_cnxStatus = cnxStatus;
         emit cnxStatusChanged(m_cnxStatus);
     }
+
+    void readDataFromFile(){
+
+
+         QByteArray buffer;
+
+         if(fileSimulation->atEnd()) return;
+
+         buffer = fileSimulation->readLine();
+         buffer += "\r\n";
+         timerSimulation->start(10);
+              qDebug()<<Q_FUNC_INFO<<buffer;
+         emit incomingData(buffer);  //Sent to onIncomingData on device.cpp
+
+    }
+
     void serPortDataReady(){
         const QByteArray &buffer= serialPort.readAll();
         qDebug()<<Q_FUNC_INFO<<buffer;
@@ -225,6 +245,12 @@ private slots:
 
 public slots:
     void sendToSerial(QByteArray data){
+
+        if(fileSimulation){
+            emit incomingData("OK\r\n");
+            return;
+        }
+
         serialPort.clear();
         int nbSend = 0;
         int totalToSend = data.length();

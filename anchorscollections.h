@@ -46,10 +46,6 @@ class AnchorsCollections : public Qml_object
     Q_OBJECT
 
 
-    Q_PROPERTY(QPointF pMax READ pMax WRITE setPMax NOTIFY pMaxChanged)
-    Q_PROPERTY(QPointF pMin READ pMin WRITE setPMin NOTIFY pMinChanged)
-
-
     QTimer tClearSession;
     AnchorsList AnchorFromDeviceHistory;
     AnchorsList AnchorFromDevice;
@@ -62,6 +58,9 @@ class AnchorsCollections : public Qml_object
     QHash<long,bool> sessionAnchor;
 
     QHash<QString,AnchorsList*> allAnchor;
+
+    Q_PROPERTY(QPointF pMax READ pMax WRITE setPMax NOTIFY pMaxChanged)
+    Q_PROPERTY(QPointF pMin READ pMin WRITE setPMin NOTIFY pMinChanged)
 
     QPointF m_pMax;
     QPointF m_pMin;

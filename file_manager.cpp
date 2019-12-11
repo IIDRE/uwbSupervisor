@@ -177,8 +177,9 @@ bool file_manager::openMapJSON(QUrl file)
 
     Anchors.getAnchorFromFile().clear();
     QString resumImport = "Importation :";
-    int iImport = 0;
+
     for(auto t : lType){
+         int iImport = 0;
         const QString &strType = type[t];
 
         QJsonArray jAnchor = jsdoc.object()[strType].toArray();
@@ -213,7 +214,7 @@ bool file_manager::openMapJSON(QUrl file)
             Anchors.getAnchorFromFile().UpdateAnchor(d.ID,0,d.X,d.Y,d.Z,0,t);
            iImport++;
         }
-          resumImport += QString("%1 %2 ").arg(strType).arg(iImport);
+        resumImport += QString("%1 %2 ").arg(strType).arg(iImport);
     }
 
     qCritical()<<resumImport;
@@ -344,13 +345,16 @@ file_manager::dxf_reader::dxf_reader(QUrl urlfile, file_manager *parent, Anchors
     else{
         parent->setLastURLS(urlfile);
     }
-    qCritical()<<QString("importation %1 point").arg(nbImport);
+    if(nbImport==1)
+        qCritical()<<QString("Importation %1 point").arg(nbImport);
+    else
+        qCritical()<<QString("Importation %1 points").arg(nbImport);
 }
 
 void file_manager::dxf_reader::addPoint(const DL_PointData &data)
 {
     qDebug()<<Q_FUNC_INFO<<QString("X: %1 y: %2 z: %3").arg(data.x).arg(data.y).arg(data.z);
-    anchors.UpdateAnchor(uid++,0,toCm(data.x),toCm(data.y),toCm(data.z),0,Anchor_type::POI);
+    anchors.UpdateAnchor(uid++,0,toCm(data.x),toCm(data.y),toCm(data.z),0,0,Anchor_type::UNKNOW);
     nbImport++;
 }
 

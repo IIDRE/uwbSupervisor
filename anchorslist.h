@@ -39,8 +39,9 @@ class Anchor_type:public QObject{
 
 public:
     enum TYPE{
-        ANCHOR,///< is a real anchor
-        POI///< is a point of interes of map
+        ANCHOR///< is a real anchor
+        ,POI///< is a point of interes of map
+        ,UNKNOW
     };Q_ENUM(TYPE)
 
     static void register_to_qml(){
@@ -59,7 +60,7 @@ struct anchor_data{
 
 
     anchor_data(unsigned long UID=0, int dist=0, int X=0, int Y=0, int Z=0, int radio=0,float weight =0
-            ,Anchor_type::TYPE anchorType = Anchor_type::ANCHOR,QString descrip=QString()):
+            ,Anchor_type::TYPE anchorType = Anchor_type::UNKNOW,QString descrip=QString()):
         UID(UID)
       ,X(X),Y(Y),Z(Z)
       ,radio(radio)

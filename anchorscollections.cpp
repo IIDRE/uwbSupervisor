@@ -113,7 +113,6 @@ void AnchorsCollections::timeOutSession()
 }
 
 
-
 void AnchorsCollections::update_anchor(qint32 idx, QString uid, QString description, int type)
 {
     bool bok;

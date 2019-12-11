@@ -47,9 +47,24 @@ void serialDevice::connectToSerialPort(int idxPort, int idxBaudRate)
         bool bo = serialPort.open(QSerialPort::ReadWrite);
 
         setCnxStatus(bo);
-
+        delete timerSimulation;
+        delete fileSimulation;
+        timerSimulation = nullptr;
+        fileSimulation = nullptr;
     }else{
-        qDebug()<<"open other "<<port.extra;
+        qDebug()<<"open other "<<port.extra<<" file: "<<Setting::getInstance()->fileSimulation();
+        fileSimulation = new QFile(Setting::getInstance()->fileSimulation());
+
+        if (!fileSimulation->open(QIODevice::ReadOnly | QIODevice::Text)){
+            qWarning()<<"Impossible d'ouvrir le fichier";
+            onSerialPortError (QSerialPort::DeviceNotFoundError);
+            return;
+        }
+        timerSimulation = new QTimer(this);
+        timerSimulation->setSingleShot(true);
+        connect(timerSimulation, &QTimer::timeout, this, &serialDevice::readDataFromFile);
+        timerSimulation->start(100);  // Used to configure timer
+        setCnxStatus(true);
 
     }
 
