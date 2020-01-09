@@ -16,7 +16,7 @@ public:
 
     static Setting * getInstance(){
         if(!instance){
-            instance = new Setting("settings.ini","settings");
+            instance = new Setting("settings_supervisor.ini","settings");
         }
         return instance;
     }
